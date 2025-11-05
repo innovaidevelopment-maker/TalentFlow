@@ -6,17 +6,21 @@ import { UserManagement } from './UserManagement';
 
 interface SettingsProps {
     currentUser: User;
-    onChangePassword: (newPassword: string) => boolean;
+    onChangePassword: (newPassword: string) => Promise<boolean>;
 }
 
 export const Settings: React.FC<SettingsProps> = ({ currentUser, onChangePassword }) => {
     const { 
         levelThresholds, setLevelThresholds, 
         departments,
-        users, setUsers,
+        users,
         logActivity,
-        handleAddDepartment: contextAddDepartment,
-        handleDeleteDepartment: contextDeleteDepartment,
+        // Fix: Add missing handlers from context
+        handleAddDepartment: addDepartment,
+        handleDeleteDepartment: deleteDepartment,
+        addUser,
+        updateUser,
+        deleteUser
     } = useData();
     
     const [activeTab, setActiveTab] = useState('account');
@@ -37,26 +41,28 @@ export const Settings: React.FC<SettingsProps> = ({ currentUser, onChangePasswor
         setTimeout(() => setFeedback(null), 3000);
     };
     
-    const onAddUser = (name: string, role: UserRole, password: string) => {
+    const onAddUser = async (name: string, role: UserRole, password: string) => {
         const org = { name: 'talentflow' }; // Simplified, should get from context if multi-org
-        const newUser = { id: `user-${Date.now()}`, name, role, email: `${name.toLowerCase().replace(' ','')}@${org.name.toLowerCase().replace(' ','')}.com`, password, enabledTools: [], organizationId: currentUser.organizationId };
-        setUsers(prev => [...prev, newUser]);
-        logActivity('CREATE_USER', `Se añadió al usuario: ${name} con el rol ${role}.`, newUser.id, currentUser);
-    };
-
-    const onUpdateUser = (userId: string, updates: Partial<User>) => {
-        const user = users.find(u => u.id === userId);
-        if(user) {
-            setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
-            logActivity('UPDATE_USER', `Se actualizaron los datos del usuario: ${user.name}`, userId, currentUser);
+        const newUser: Omit<User, 'id'> = { name, role, email: `${name.toLowerCase().replace(' ','')}@${org.name.toLowerCase().replace(' ','')}.com`, password, enabledTools: [], organizationId: currentUser.organizationId };
+        const addedUser = await addUser(newUser);
+        if (addedUser) {
+            await logActivity('CREATE_USER', `Se añadió al usuario: ${name} con el rol ${role}.`, addedUser.id, currentUser);
         }
     };
 
-    const onDeleteUser = (userId: string) => {
+    const onUpdateUser = async (userId: string, updates: Partial<User>) => {
+        const user = users.find(u => u.id === userId);
+        if(user) {
+            await updateUser(userId, updates);
+            await logActivity('UPDATE_USER', `Se actualizaron los datos del usuario: ${user.name}`, userId, currentUser);
+        }
+    };
+
+    const onDeleteUser = async (userId: string) => {
         const user = users.find(u => u.id === userId);
         if (user) {
-            setUsers(prev => prev.filter(u => u.id !== userId));
-            logActivity('DELETE_USER', `Se eliminó al usuario: ${user.name}`, userId, currentUser);
+            await deleteUser(userId);
+            await logActivity('DELETE_USER', `Se eliminó al usuario: ${user.name}`, userId, currentUser);
         }
     };
 
@@ -83,13 +89,13 @@ export const Settings: React.FC<SettingsProps> = ({ currentUser, onChangePasswor
                 return;
             }
         }
-        setLevelThresholds(localThresholds);
+        setLevelThresholds(localThresholds); // This can remain a local storage operation
         showFeedback('Ajustes de umbrales guardados con éxito.');
     };
 
-    const handleAddDepartment = () => {
+    const handleAddDepartment = async () => {
         if (newDepartment.trim()) {
-            const success = contextAddDepartment(newDepartment.trim(), currentUser);
+            const success = await addDepartment(newDepartment.trim(), currentUser);
             if (success) {
                 setNewDepartment('');
                 showFeedback('Departamento añadido con éxito.');
@@ -99,9 +105,9 @@ export const Settings: React.FC<SettingsProps> = ({ currentUser, onChangePasswor
         }
     };
     
-    const handleDeleteConfirm = () => {
+    const handleDeleteConfirm = async () => {
         if (departmentToDelete) {
-            const result = contextDeleteDepartment(departmentToDelete.name, currentUser);
+            const result = await deleteDepartment(departmentToDelete.name, currentUser);
             if (result.success) {
                 showFeedback(`Departamento "${departmentToDelete.name}" eliminado.`);
                 setDepartmentToDelete(null);
@@ -117,7 +123,7 @@ export const Settings: React.FC<SettingsProps> = ({ currentUser, onChangePasswor
         return `(Rango: ${previousThreshold.toFixed(1)} - ${currentThreshold.toFixed(1)})`;
     }
 
-    const handlePasswordChangeSubmit = (e: React.FormEvent) => {
+    const handlePasswordChangeSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setFeedback(null);
 
@@ -134,7 +140,7 @@ export const Settings: React.FC<SettingsProps> = ({ currentUser, onChangePasswor
             return;
         }
         
-        const success = onChangePassword(newPassword);
+        const success = await onChangePassword(newPassword);
         if (success) {
             showFeedback('Contraseña actualizada con éxito.');
             setCurrentPassword('');

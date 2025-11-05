@@ -12,16 +12,26 @@ const supabaseAnonKey: string | undefined = (typeof process !== 'undefined' && p
     ? (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY)
     : undefined;
 
-let supabase;
+let supabase: any; // Allow 'any' for the mock object
 export let isSupabaseConfigured = true;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn("ADVERTENCIA: Las variables de entorno de Supabase (SUPABASE_URL, SUPABASE_ANON_KEY) no están configuradas. La aplicación se ejecutará en modo de demostración solo local. La autenticación real no funcionará.");
+    console.warn("ADVERTENCIA: Las variables de entorno de Supabase (SUPABASE_URL, SUPABASE_ANON_KEY) no están configuradas. La aplicación se ejecutará en modo de demostración solo local. La persistencia de datos y la autenticación real no funcionarán.");
     
     isSupabaseConfigured = false;
     
     // Asigna un cliente falso para evitar que el resto del código falle al intentar usar `supabase`.
+    const mockDb = {
+        from: () => mockDb,
+        select: () => Promise.resolve({ data: [], error: { message: "Supabase not configured." } }),
+        insert: () => Promise.resolve({ data: [], error: { message: "Supabase not configured." } }),
+        update: () => Promise.resolve({ data: [], error: { message: "Supabase not configured." } }),
+        delete: () => Promise.resolve({ data: [], error: { message: "Supabase not configured." } }),
+        eq: () => mockDb,
+    };
+    
     supabase = { 
+        ...mockDb,
         auth: { 
             getSession: () => Promise.resolve({ data: { session: null }, error: null }),
             signInWithPassword: () => Promise.resolve({ data: { session: null }, error: { message: "Supabase not configured." } }),

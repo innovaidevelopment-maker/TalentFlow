@@ -7,7 +7,8 @@ interface ChatProps {
     users: User[];
     threads: ChatThread[];
     messages: ChatMessage[];
-    onCreateThread: (threadData: Omit<ChatThread, 'id'>) => string;
+    // Fix: Update prop type to expect a Promise
+    onCreateThread: (threadData: Omit<ChatThread, 'id'>) => Promise<string>;
     onSendMessage: (chatId: string, text: string) => void;
     onEditMessage: (messageId: string, newText: string) => void;
     onDeleteMessage: (messageId: string) => void;
@@ -25,7 +26,8 @@ const NewConversationModal: React.FC<{
     users: User[];
     currentUser: User;
     existingThreads: ChatThread[];
-    onCreate: (threadData: Omit<ChatThread, 'id'>) => string;
+    // Fix: Update prop type to expect a Promise
+    onCreate: (threadData: Omit<ChatThread, 'id'>) => Promise<string>;
     onActivateThread: (threadId: string) => void;
 }> = ({ isOpen, onClose, users, currentUser, existingThreads, onCreate, onActivateThread }) => {
     const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
@@ -46,7 +48,8 @@ const NewConversationModal: React.FC<{
         });
     };
 
-    const handleCreate = () => {
+    // Fix: Make function async to handle promise from onCreate
+    const handleCreate = async () => {
         const participantIds = [currentUser.id, ...Array.from(selectedUserIds)];
         
         if (!isGroup && selectedUserIds.size === 1) {
@@ -64,7 +67,7 @@ const NewConversationModal: React.FC<{
             }
         }
         
-        const newThreadId = onCreate({
+        const newThreadId = await onCreate({
             participantIds,
             isGroup,
             name: isGroup ? groupName : undefined,

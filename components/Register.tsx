@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import type { User, Organization } from '../types';
 
 interface RegisterProps {
-    onRegister: (orgName: string, userName: string, userEmail: string, userPassword: string) => boolean;
+    // Fix: Update prop type to expect a Promise
+    onRegister: (orgName: string, userName: string, userEmail: string, userPassword: string) => Promise<boolean>;
     onNavigateToLogin: () => void;
     users: User[];
     organizations: Organization[];
@@ -16,7 +17,8 @@ export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogi
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    // Fix: Make function async to handle promise from onRegister
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
@@ -35,7 +37,7 @@ export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogi
             return;
         }
         
-        const success = onRegister(orgName.trim(), userName.trim(), email.trim(), password);
+        const success = await onRegister(orgName.trim(), userName.trim(), email.trim(), password);
 
         if (!success) {
             setError('Ocurrió un error inesperado durante el registro.');

@@ -84,16 +84,19 @@ const App: React.FC = () => {
         chatThreads, chatMessages, chatReadStatuses, attendanceRecords, scheduledBreaks, sickLeaves, employeeNotes,
         workSchedules, tasks, activityLog, levelThresholds, evaluationTags, criteriaInEdit,
         
-        setOrganizations, setUsers, setEmployees, setApplicants, setCriteriaTemplates, setEvaluations, setDepartments,
-        setScheduledEvaluations, setChatThreads, setChatMessages, setChatReadStatuses, setAttendanceRecords,
-        setScheduledBreaks, setSickLeaves, setEmployeeNotes, setWorkSchedules, setTasks, setActivityLog,
-        setLevelThresholds, setCriteriaInEdit,
+        setCriteriaInEdit,
+        currentUser, setCurrentUser,
         
-        logActivity, handleCompleteEvaluation,
+        logActivity, handleCompleteEvaluation, handleRegister: handleRegisterInContext,
+        addCriteriaTemplate, updateCriteriaTemplate, deleteCriteriaTemplate,
+        addScheduledEvaluation, updateScheduledEvaluation, deleteScheduledEvaluation,
+        addChatThread, addChatMessage, updateChatMessage, deleteChatMessage, updateChatThread, deleteChatThread, markThreadAsRead,
+        addOrUpdateAttendanceRecord, updateAttendanceStatus, updateAttendanceRecord,
+        addSickLeave, addScheduledBreak, addEmployeeNote, addOrUpdateWorkSchedule,
+        updateUser,
     } = useData();
     
-    // --- SESSION AND VIEW STATE (The only state App.tsx now manages) ---
-    const [currentUser, setCurrentUser] = useLocalStorage<User | null>('currentUser', null);
+    // --- VIEW STATE (The only state App.tsx now manages besides authView) ---
     const [currentView, setCurrentView] = useLocalStorage<string>('currentView', 'main');
     const [authView, setAuthView] = useState<'login' | 'register'>('login');
     const [selectedThreadId, setSelectedThreadId] = useLocalStorage<string|null>('selectedThreadId', null);
@@ -188,48 +191,23 @@ const App: React.FC = () => {
         }
     };
 
-    const handleLogout = () => {
-        if(currentUser) logActivity('USER_LOGOUT', `El usuario ${currentUser.name} cerró sesión.`, undefined, currentUser);
+    const handleLogout = async () => {
+        if(currentUser) await logActivity('USER_LOGOUT', `El usuario ${currentUser.name} cerró sesión.`, undefined, currentUser);
         setCurrentUser(null);
         setAuthView('login');
         setCurrentView('main');
     };
 
-     const handleRegister = (orgName: string, userName: string, userEmail: string, userPassword: string): boolean => {
+     const handleRegister = async (orgName: string, userName: string, userEmail: string, userPassword: string): Promise<boolean> => {
         if (organizations.some(o => o.name.toLowerCase() === orgName.toLowerCase())) return false;
         if (users.some(u => u.email.toLowerCase() === userEmail.toLowerCase())) return false;
 
-        const newOrg = { id: `org-${Date.now()}`, name: orgName };
-        setOrganizations(prev => [...prev, newOrg]);
-
-        const newUser: User = {
-            id: `user-${Date.now()}`,
-            name: userName,
-            email: userEmail,
-            password: userPassword,
-            role: 'Admin',
-            organizationId: newOrg.id,
-            enabledTools: ALL_TOOLS,
-        };
-        setUsers(prev => [...prev, newUser]);
-        
-        const defaultDepts: Department[] = [
-            { id: `dept-${Date.now()}-1`, name: 'General', organizationId: newOrg.id },
-            { id: `dept-${Date.now()}-2`, name: 'Recursos Humanos', organizationId: newOrg.id },
-        ];
-        setDepartments(prev => [...prev, ...defaultDepts]);
-        
-        const baseTemplates = initialData.criteriaTemplates.filter(t => t.organizationId === 'org-1');
-        const newOrgTemplates = baseTemplates.map((t, index) => ({
-            ...t,
-            id: `template-${newOrg.id}-${index}`,
-            organizationId: newOrg.id,
-        }));
-        setCriteriaTemplates(prev => [...prev, ...newOrgTemplates]);
-
-        handleLogin(newUser);
-        logActivity('ORG_REGISTER', `Se registró la organización '${orgName}' con el usuario admin '${userName}'.`, newOrg.id, newUser);
-        return true;
+        const newUser = await handleRegisterInContext(orgName, userName, userEmail, userPassword, ALL_TOOLS);
+        if(newUser) {
+            handleLogin(newUser);
+            return true;
+        }
+        return false;
     };
 
     const handleNavigate = (view: string) => {
@@ -259,153 +237,123 @@ const App: React.FC = () => {
             setCriteriaInEdit(template.criteria);
         }
     };
-    const handleSaveNewTemplate = (name: string, criteria: Factor[]) => {
-        const newTemplate: CriteriaTemplate = {
-            id: `template-${Date.now()}`,
-            name,
-            criteria,
-            organizationId: currentUser!.organizationId,
-        };
-        setCriteriaTemplates(prev => [...prev, newTemplate]);
-        logActivity('CREATE_CRITERIA_TEMPLATE', `Se creó la plantilla de criterios: ${name}`, newTemplate.id, currentUser);
+    const handleSaveNewTemplate = async (name: string, criteria: Factor[]) => {
+        if(!currentUser) return;
+        const newTemplate = await addCriteriaTemplate({ name, criteria, organizationId: currentUser.organizationId });
+        await logActivity('CREATE_CRITERIA_TEMPLATE', `Se creó la plantilla de criterios: ${name}`, newTemplate.id, currentUser);
     };
-    const handleDeleteTemplate = (templateId: string) => {
+    const handleDeleteTemplate = async (templateId: string) => {
         const template = organizationData.criteriaTemplates.find(t => t.id === templateId);
-        if(template) {
-            setCriteriaTemplates(prev => prev.filter(t => t.id !== templateId));
-            logActivity('DELETE_CRITERIA_TEMPLATE', `Se eliminó la plantilla de criterios: ${template.name}`, templateId, currentUser);
+        if(template && currentUser) {
+            await deleteCriteriaTemplate(templateId);
+            await logActivity('DELETE_CRITERIA_TEMPLATE', `Se eliminó la plantilla de criterios: ${template.name}`, templateId, currentUser);
         }
     };
-    const handleRenameTemplate = (templateId: string, newName: string) => {
+    const handleRenameTemplate = async (templateId: string, newName: string) => {
         const template = organizationData.criteriaTemplates.find(t => t.id === templateId);
-        if(template) {
-            setCriteriaTemplates(prev => prev.map(t => t.id === templateId ? { ...t, name: newName } : t));
-            logActivity('RENAME_CRITERIA_TEMPLATE', `Se renombró la plantilla '${template.name}' a '${newName}'`, templateId, currentUser);
+        if(template && currentUser) {
+            await updateCriteriaTemplate(templateId, { name: newName });
+            await logActivity('RENAME_CRITERIA_TEMPLATE', `Se renombró la plantilla '${template.name}' a '${newName}'`, templateId, currentUser);
         }
     };
-    const handleUpdateTemplate = (templateId: string, criteria: Factor[]) => {
+    const handleUpdateTemplate = async (templateId: string, criteria: Factor[]) => {
         const template = organizationData.criteriaTemplates.find(t => t.id === templateId);
-        if(template) {
-            setCriteriaTemplates(prev => prev.map(t => t.id === templateId ? { ...t, criteria } : t));
-            logActivity('UPDATE_CRITERIA_TEMPLATE', `Se actualizó la plantilla: ${template.name}`, templateId, currentUser);
+        if(template && currentUser) {
+            await updateCriteriaTemplate(templateId, { criteria });
+            await logActivity('UPDATE_CRITERIA_TEMPLATE', `Se actualizó la plantilla: ${template.name}`, templateId, currentUser);
         }
     };
 
-    const handleSaveEvaluationEvent = (eventData: Omit<ScheduledEvaluation, 'id' | 'creatorId' | 'organizationId'>, id?: string) => {
+    const handleSaveEvaluationEvent = async (eventData: Omit<ScheduledEvaluation, 'id' | 'creatorId' | 'organizationId'>, id?: string) => {
+        if(!currentUser) return;
         if (id) {
-            setScheduledEvaluations(prev => prev.map(e => e.id === id ? { ...e, ...eventData } : e));
-            logActivity('UPDATE_SCHEDULED_EVALUATION', `Se actualizó el evento del calendario: ${eventData.title}`, id, currentUser);
+            await updateScheduledEvaluation(id, eventData);
+            await logActivity('UPDATE_SCHEDULED_EVALUATION', `Se actualizó el evento del calendario: ${eventData.title}`, id, currentUser);
         } else {
-            const newEvent: ScheduledEvaluation = { ...eventData, id: `se-${Date.now()}`, creatorId: currentUser!.id, organizationId: currentUser!.organizationId };
-            setScheduledEvaluations(prev => [...prev, newEvent]);
-            logActivity('CREATE_SCHEDULED_EVALUATION', `Se creó el evento del calendario: ${newEvent.title}`, newEvent.id, currentUser);
+            const newEvent = { ...eventData, creatorId: currentUser.id, organizationId: currentUser.organizationId };
+            const addedEvent = await addScheduledEvaluation(newEvent);
+            if(addedEvent) {
+                await logActivity('CREATE_SCHEDULED_EVALUATION', `Se creó el evento del calendario: ${addedEvent.title}`, addedEvent.id, currentUser);
+            }
         }
     };
-    const handleDeleteEvaluationEvent = (eventId: string) => {
+    const handleDeleteEvaluationEvent = async (eventId: string) => {
         const event = scheduledEvaluations.find(e => e.id === eventId);
-        if(event) {
-            setScheduledEvaluations(prev => prev.filter(e => e.id !== eventId));
-            logActivity('DELETE_SCHEDULED_EVALUATION', `Se eliminó el evento del calendario: ${event.title}`, eventId, currentUser);
+        if(event && currentUser) {
+            await deleteScheduledEvaluation(eventId);
+            await logActivity('DELETE_SCHEDULED_EVALUATION', `Se eliminó el evento del calendario: ${event.title}`, eventId, currentUser);
         }
     };
 
-    const handleCreateThread = (threadData: Omit<ChatThread, 'id'>): string => {
-        const newThread = { ...threadData, id: `thread-${Date.now()}` };
-        setChatThreads(prev => [...prev, newThread]);
-        logActivity('CREATE_CHAT_THREAD', `Se creó el chat: ${threadData.name || 'privado'}`, newThread.id, currentUser);
-        return newThread.id;
+    const handleCreateThread = async (threadData: Omit<ChatThread, 'id'>): Promise<string> => {
+        const newThread = await addChatThread(threadData);
+        if(newThread && currentUser) {
+            await logActivity('CREATE_CHAT_THREAD', `Se creó el chat: ${threadData.name || 'privado'}`, newThread.id, currentUser);
+            return newThread.id;
+        }
+        return '';
     };
-    const handleSendMessage = (chatId: string, text: string) => {
-        const newMessage: ChatMessage = {
-            id: `msg-${Date.now()}`,
-            chatId, text,
-            senderId: currentUser!.id,
-            timestamp: new Date().toISOString()
-        };
-        setChatMessages(prev => [...prev, newMessage]);
+
+    const handleSendMessage = async (chatId: string, text: string) => {
+        if(!currentUser) return;
+        await addChatMessage({ chatId, text, senderId: currentUser.id, timestamp: new Date().toISOString() });
     };
-    const handleEditMessage = (messageId: string, newText: string) => {
-        setChatMessages(prev => prev.map(m => m.id === messageId ? { ...m, text: newText } : m));
+
+    const handleEditMessage = async (messageId: string, newText: string) => {
+        await updateChatMessage(messageId, { text: newText });
     };
-    const handleDeleteMessage = (messageId: string) => {
-        setChatMessages(prev => prev.filter(m => m.id !== messageId));
+
+    const handleDeleteMessage = async (messageId: string) => {
+        await deleteChatMessage(messageId);
     };
-    const handleEditThread = (threadId: string, newName: string) => {
-        setChatThreads(prev => prev.map(t => t.id === threadId ? { ...t, name: newName } : t));
+
+    const handleEditThread = async (threadId: string, newName: string) => {
+        await updateChatThread(threadId, { name: newName });
     };
-    const handleDeleteThread = (threadId: string) => {
-        setChatThreads(prev => prev.filter(t => t.id !== threadId));
-        setChatMessages(prev => prev.filter(m => m.chatId !== threadId));
+
+    const handleDeleteThread = async (threadId: string) => {
+        await deleteChatThread(threadId);
         if (selectedThreadId === threadId) {
             setSelectedThreadId(null);
         }
     };
-    const handleMarkAsRead = (threadId: string) => {
-        setChatReadStatuses(prev => {
-            const existing = prev.find(s => s.threadId === threadId && s.userId === currentUser!.id);
-            if (existing) {
-                return prev.map(s => s.id === existing.id ? { ...s, lastSeenTimestamp: new Date().toISOString() } : s);
-            }
-            return [...prev, { id: `read-${Date.now()}`, threadId, userId: currentUser!.id, lastSeenTimestamp: new Date().toISOString() }];
-        });
+    
+    const handleMarkAsRead = async (threadId: string) => {
+        if(!currentUser) return;
+        await markThreadAsRead(threadId, currentUser.id);
     };
     
-    const handleAddOrUpdateAttendance = (data: { employeeId: string; date: string; clockIn: string; clockOut: string | null }) => {
-        setAttendanceRecords(prev => {
-            const existingIndex = prev.findIndex(r => r.employeeId === data.employeeId && r.date === data.date);
-            if (existingIndex > -1) {
-                const updated = [...prev];
-                const currentRecord = updated[existingIndex];
-                updated[existingIndex] = { ...currentRecord, ...data, status: currentRecord.status === 'Ausente' ? 'Presente' : currentRecord.status };
-                return updated;
-            } else {
-                return [...prev, { id: `att-${Date.now()}`, ...data, status: 'Presente', organizationId: currentUser!.organizationId }];
-            }
-        });
-        logActivity('UPDATE_ATTENDANCE', `Se registró/actualizó asistencia para el empleado con ID ${data.employeeId} en la fecha ${data.date}`, data.employeeId, currentUser);
+    const handleAddOrUpdateAttendance = async (data: { employeeId: string; date: string; clockIn: string; clockOut: string | null }) => {
+        if(!currentUser) return;
+        await addOrUpdateAttendanceRecord(data, currentUser.organizationId);
+        await logActivity('UPDATE_ATTENDANCE', `Se registró/actualizó asistencia para el empleado con ID ${data.employeeId} en la fecha ${data.date}`, data.employeeId, currentUser);
     };
-    const handleUpdateAttendanceStatus = (employeeId: string, date: string, status: AttendanceStatus) => {
-        setAttendanceRecords(prev => {
-            const existingIndex = prev.findIndex(r => r.employeeId === employeeId && r.date === date);
-            const clockUpdates = status === 'Presente' ? {} : { clockIn: null, clockOut: null };
-            if (existingIndex > -1) {
-                const updated = [...prev];
-                updated[existingIndex] = { ...updated[existingIndex], status, ...clockUpdates };
-                return updated;
-            } else {
-                return [...prev, { id: `att-${Date.now()}`, employeeId, date, status, clockIn: null, clockOut: null, organizationId: currentUser!.organizationId }];
-            }
-        });
-        logActivity('UPDATE_ATTENDANCE_STATUS', `Se cambió estado de asistencia a ${status} para el empleado con ID ${employeeId} en la fecha ${date}`, employeeId, currentUser);
+    const handleUpdateAttendanceStatus = async (employeeId: string, date: string, status: AttendanceStatus) => {
+        if(!currentUser) return;
+        await updateAttendanceStatus(employeeId, date, status, currentUser.organizationId);
+        await logActivity('UPDATE_ATTENDANCE_STATUS', `Se cambió estado de asistencia a ${status} para el empleado con ID ${employeeId} en la fecha ${date}`, employeeId, currentUser);
     };
 
-    const handleUpdateAttendanceRecord = (record: AttendanceRecord) => {
-        setAttendanceRecords(prev => prev.map(r => r.id === record.id ? record : r));
+    const handleUpdateAttendanceRecord = async (record: AttendanceRecord) => {
+        await updateAttendanceRecord(record.id, record);
     };
-    const handleAddSickLeave = (leave: Omit<SickLeave, 'id'>) => {
-        const newLeave = { ...leave, id: `sick-${Date.now()}`};
-        setSickLeaves(prev => [newLeave, ...prev]);
-        logActivity('ADD_SICK_LEAVE', `Se añadió reposo para empleado ID ${leave.employeeId}`, leave.employeeId, currentUser);
+
+    const handleAddSickLeave = async (leave: Omit<SickLeave, 'id'>) => {
+        const addedLeave = await addSickLeave(leave);
+        if(addedLeave) await logActivity('ADD_SICK_LEAVE', `Se añadió reposo para empleado ID ${leave.employeeId}`, leave.employeeId, currentUser);
     };
-    const handleAddScheduledBreak = (sBreak: Omit<ScheduledBreak, 'id'>) => {
-        const newBreak = { ...sBreak, id: `break-${Date.now()}`};
-        setScheduledBreaks(prev => [newBreak, ...prev]);
-        logActivity('ADD_SCHEDULED_BREAK', `Se añadió descanso para empleado ID ${sBreak.employeeId}`, sBreak.employeeId, currentUser);
+    const handleAddScheduledBreak = async (sBreak: Omit<ScheduledBreak, 'id'>) => {
+        const addedBreak = await addScheduledBreak(sBreak);
+        if(addedBreak) await logActivity('ADD_SCHEDULED_BREAK', `Se añadió descanso para empleado ID ${sBreak.employeeId}`, sBreak.employeeId, currentUser);
     };
-    const handleAddEmployeeNote = (note: Omit<EmployeeNote, 'id'>) => {
-        const newNote = { ...note, id: `note-${Date.now()}`};
-        setEmployeeNotes(prev => [newNote, ...prev]);
-        logActivity('ADD_EMPLOYEE_NOTE', `Se añadió nota para empleado ID ${note.employeeId}`, note.employeeId, currentUser);
+    const handleAddEmployeeNote = async (note: Omit<EmployeeNote, 'id'>) => {
+        const addedNote = await addEmployeeNote(note);
+        if(addedNote) await logActivity('ADD_EMPLOYEE_NOTE', `Se añadió nota para empleado ID ${note.employeeId}`, note.employeeId, currentUser);
     };
-    const handleAddOrUpdateWorkSchedule = (schedule: Omit<WorkSchedule, 'id'>) => {
-        setWorkSchedules(prev => {
-            const existing = prev.find(s => s.employeeId === schedule.employeeId && s.date === schedule.date);
-            if(existing) {
-                return prev.map(s => s.id === existing.id ? { ...s, ...schedule } : s);
-            }
-            return [...prev, { ...schedule, id: `ws-${Date.now()}`}];
-        });
-        logActivity('UPDATE_WORK_SCHEDULE', `Se actualizó horario para empleado ID ${schedule.employeeId} en fecha ${schedule.date}`, schedule.employeeId, currentUser);
+    const handleAddOrUpdateWorkSchedule = async (schedule: Omit<WorkSchedule, 'id'>) => {
+        if(!currentUser) return;
+        await addOrUpdateWorkSchedule(schedule, currentUser.organizationId);
+        await logActivity('UPDATE_WORK_SCHEDULE', `Se actualizó horario para empleado ID ${schedule.employeeId} en fecha ${schedule.date}`, schedule.employeeId, currentUser);
     };
 
     // --- RENDER LOGIC ---
@@ -413,6 +361,7 @@ const App: React.FC = () => {
         if (authView === 'login') {
             return <Login onLogin={handleLogin} onNavigateToRegister={() => setAuthView('register')} users={users} />;
         }
+        // Fix: Pass correct prop type for onRegister
         return <Register onRegister={handleRegister} onNavigateToLogin={() => setAuthView('login')} users={users} organizations={organizations} />;
     }
     
@@ -494,25 +443,21 @@ const App: React.FC = () => {
         case 'flightRisk': viewContent = <FlightRiskDashboard employees={organizationData.employees} evaluations={organizationData.evaluations} attendanceRecords={organizationData.attendanceRecords} departments={organizationDepartmentNames} />; break;
         case 'settings': viewContent = <Settings 
             currentUser={currentUser} 
-            onChangePassword={(newPassword) => {
-                const userToUpdate = users.find(u => u.id === currentUser.id);
-                if (!userToUpdate) return false;
-                
-                const updatedUser: User = { ...userToUpdate, password: newPassword };
-
-                setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
+            onChangePassword={async (newPassword) => {
+                const updatedUser = { ...currentUser, password: newPassword };
+                await updateUser(currentUser.id, { password: newPassword });
                 setCurrentUser(updatedUser);
-                logActivity('UPDATE_PASSWORD', 'El usuario cambió su propia contraseña.', undefined, updatedUser);
-
+                await logActivity('UPDATE_PASSWORD', 'El usuario cambió su propia contraseña.', undefined, updatedUser);
                 return true;
             }} 
         />; break;
         case 'calendar': viewContent = <EvaluationCalendar events={organizationData.scheduledEvaluations} onSaveEvent={handleSaveEvaluationEvent} onDeleteEvent={handleDeleteEvaluationEvent} departments={organizationDepartmentNames} tags={evaluationTags} currentUser={currentUser} users={organizationData.users} />; break;
+        // Fix: Pass correct prop type for onCreateThread
         case 'chat': viewContent = <Chat currentUser={currentUser} users={organizationData.users} threads={organizationData.chatThreads} messages={organizationChatMessages} onCreateThread={handleCreateThread} onSendMessage={handleSendMessage} onEditMessage={handleEditMessage} onDeleteMessage={handleDeleteMessage} onEditThread={handleEditThread} onDeleteThread={handleDeleteThread} selectedThreadId={selectedThreadId} setSelectedThreadId={setSelectedThreadId} unreadThreads={unreadThreads} onMarkAsRead={handleMarkAsRead} />; break;
         case 'tasks': viewContent = <TasksDashboard currentUser={currentUser} />; break;
         case 'attendance': viewContent = <AttendanceDashboard employees={organizationData.employees} attendanceRecords={organizationData.attendanceRecords} workSchedules={organizationData.workSchedules} scheduledBreaks={organizationData.scheduledBreaks} sickLeaves={organizationData.sickLeaves} departments={organizationDepartmentNames} onViewEmployeeFile={(id) => {setCurrentView('employeeFile'); setEmployeeFileToView(id);}} onAddOrUpdateAttendanceRecord={handleAddOrUpdateAttendance} onUpdateAttendanceStatus={handleUpdateAttendanceStatus} />; break;
         case 'attendanceAnalytics': viewContent = <AttendanceAnalyticsDashboard employees={organizationData.employees} attendanceRecords={organizationData.attendanceRecords} workSchedules={organizationData.workSchedules} departments={organizationDepartmentNames} />; break;
-        case 'employeeFile': if(employeeFileToView) { viewContent = <EmployeeFile employeeId={employeeFileToView} employees={organizationData.employees} setEmployees={setEmployees} attendanceRecords={organizationData.attendanceRecords} scheduledBreaks={organizationData.scheduledBreaks} sickLeaves={organizationData.sickLeaves} employeeNotes={organizationData.employeeNotes} workSchedules={organizationData.workSchedules} currentUser={currentUser} users={organizationData.users} departments={organizationDepartmentNames} onUpdateAttendance={handleUpdateAttendanceRecord} onAddSickLeave={handleAddSickLeave} onAddScheduledBreak={handleAddScheduledBreak} onAddEmployeeNote={handleAddEmployeeNote} onAddOrUpdateWorkSchedule={handleAddOrUpdateWorkSchedule} onBack={() => { setCurrentView('attendance'); setEmployeeFileToView(null);}}/> } else { viewContent = <p>No employee selected</p>; } break;
+        case 'employeeFile': if(employeeFileToView) { viewContent = <EmployeeFile employeeId={employeeFileToView} onBack={() => { setCurrentView('attendance'); setEmployeeFileToView(null);}}/> } else { viewContent = <p>No employee selected</p>; } break;
         case 'activityLog': viewContent = <ActivityLogDashboard logs={organizationData.activityLog} users={organizationData.users} />; break;
         default: viewContent = <p>View not found: {currentView}</p>;
     }

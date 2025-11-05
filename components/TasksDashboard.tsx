@@ -14,25 +14,23 @@ const priorityMap: Record<TaskPriority, { color: string, name: string }> = {
 const TaskModal: React.FC<{
     isOpen: boolean;
     onClose: () => void;
-    onSave: (task: Omit<Task, 'id'>) => void;
-    taskToEdit: Omit<Task, 'id'> | Task | null;
+    onSave: (task: Omit<Task, 'id'> | Partial<Task>) => void;
+    taskToEdit: Task | null;
     users: User[];
     departments: string[];
     currentUser: User;
 }> = ({ isOpen, onClose, onSave, taskToEdit, users, departments, currentUser }) => {
     
-    const [formData, setFormData] = useState<Omit<Task, 'id'>>({
+    const [formData, setFormData] = useState<Omit<Task, 'id' | 'createdAt' | 'creatorId'>>({
         title: taskToEdit?.title || '',
         description: taskToEdit?.description || '',
         status: taskToEdit?.status || 'Pendiente',
         priority: taskToEdit?.priority || 'Media',
         dueDate: taskToEdit?.dueDate || '',
-        createdAt: (taskToEdit as Task)?.createdAt || new Date().toISOString(),
-        creatorId: (taskToEdit as Task)?.creatorId || currentUser.id,
         assigneeIds: taskToEdit?.assigneeIds || [],
         departmentTags: taskToEdit?.departmentTags || [],
         subtasks: taskToEdit?.subtasks || [],
-        organizationId: (taskToEdit as Task)?.organizationId || currentUser.organizationId,
+        organizationId: taskToEdit?.organizationId || currentUser.organizationId,
     });
     const [newSubtask, setNewSubtask] = useState('');
 
@@ -135,30 +133,9 @@ interface TasksDashboardProps {
 }
 
 export const TasksDashboard: React.FC<TasksDashboardProps> = ({ currentUser }) => {
-    const { tasks, users, departments, logActivity, setTasks } = useData();
-    
-    const onAddTask = (task: Omit<Task, 'id'>) => {
-        const newTask = { ...task, id: `task-${Date.now()}` };
-        setTasks(prev => [...prev, newTask]);
-        logActivity('CREATE_TASK', `Se creó la tarea: ${newTask.title}`, newTask.id, currentUser);
-    };
-
-    const onUpdateTask = (taskId: string, updates: Partial<Task>) => {
-        const task = tasks.find(t => t.id === taskId);
-        if(task) {
-            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...updates } : t));
-            logActivity('UPDATE_TASK', `Se actualizó la tarea: ${task.title}`, taskId, currentUser);
-        }
-    };
-    
-    const onDeleteTask = (taskId: string) => {
-        const task = tasks.find(t => t.id === taskId);
-        if (task) {
-            setTasks(prev => prev.filter(t => t.id !== taskId));
-            logActivity('DELETE_TASK', `Se eliminó la tarea: ${task.title}`, taskId, currentUser);
-        }
-    };
-    
+    // Fix: Add missing task handlers from context
+    const { tasks, users, departments, logActivity, addTask, updateTask, deleteTask } = useData();
+        
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
     const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
@@ -189,35 +166,47 @@ export const TasksDashboard: React.FC<TasksDashboardProps> = ({ currentUser }) =
         });
     };
 
-    const handleSubtaskToggle = (taskId: string, subtaskId: string) => {
+    const handleSubtaskToggle = async (taskId: string, subtaskId: string) => {
         const task = tasks.find(t => t.id === taskId);
         if (!task) return;
 
         const updatedSubtasks = task.subtasks.map(st =>
             st.id === subtaskId ? { ...st, completed: !st.completed } : st
         );
-        onUpdateTask(taskId, { subtasks: updatedSubtasks });
+        await updateTask(taskId, { subtasks: updatedSubtasks });
     };
 
-    const handleSaveTask = (taskData: Omit<Task, 'id'>) => {
+    const handleSaveTask = async (taskData: Omit<Task, 'id'> | Partial<Task>) => {
         if(taskToEdit) {
-            onUpdateTask(taskToEdit.id, taskData);
+            await updateTask(taskToEdit.id, taskData);
+            await logActivity('UPDATE_TASK', `Se actualizó la tarea: ${taskToEdit.title}`, taskToEdit.id, currentUser);
         } else {
-            onAddTask(taskData);
+            const addedTask = await addTask(taskData as Omit<Task, 'id' | 'createdAt' | 'creatorId'>);
+            if (addedTask) {
+               await logActivity('CREATE_TASK', `Se creó la tarea: ${addedTask.title}`, addedTask.id, currentUser);
+            }
         }
         setIsModalOpen(false);
         setTaskToEdit(null);
+    };
+
+    const handleDeleteTask = async (taskId: string) => {
+        const task = tasks.find(t => t.id === taskId);
+        if (task) {
+            await deleteTask(taskId);
+            await logActivity('DELETE_TASK', `Se eliminó la tarea: ${task.title}`, taskId, currentUser);
+        }
     };
 
     const handleDragStart = (e: React.DragEvent<HTMLDivElement>, taskId: string) => {
         e.dataTransfer.setData('taskId', taskId);
     };
     
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>, status: TaskStatus) => {
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>, status: TaskStatus) => {
         e.preventDefault();
         const taskId = e.dataTransfer.getData('taskId');
         if (taskId) {
-            onUpdateTask(taskId, { status });
+            await updateTask(taskId, { status });
         }
         setDraggedOverColumn(null);
     };
@@ -342,8 +331,8 @@ export const TasksDashboard: React.FC<TasksDashboardProps> = ({ currentUser }) =
                         <p className="text-brand-text-secondary my-2">¿Estás seguro de que quieres eliminar la tarea "<span className="font-semibold text-brand-text-primary">{taskToDelete.title}</span>"? Esta acción no se puede deshacer.</p>
                         <div className="flex justify-end gap-4 pt-4">
                             <button onClick={() => setTaskToDelete(null)} className="px-4 py-2 bg-slate-700 rounded-lg">Cancelar</button>
-                            <button onClick={() => {
-                                onDeleteTask(taskToDelete.id);
+                            <button onClick={async () => {
+                                await handleDeleteTask(taskToDelete.id);
                                 setTaskToDelete(null);
                             }} className="px-4 py-2 bg-red-600 text-white rounded-lg">Eliminar</button>
                         </div>

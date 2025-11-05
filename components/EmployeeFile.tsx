@@ -1,25 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import type { Employee, AttendanceRecord, ScheduledBreak, SickLeave, EmployeeNote, User, WorkSchedule } from '../types';
+import { useData } from '../context/DataContext';
 import { ArrowLeftIcon, PlusIcon, PencilIcon } from './icons';
 import { EmployeeFormModal } from './EmployeeFormModal';
 
 interface EmployeeFileProps {
   employeeId: string;
-  employees: Employee[];
-  setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
-  attendanceRecords: AttendanceRecord[];
-  scheduledBreaks: ScheduledBreak[];
-  sickLeaves: SickLeave[];
-  employeeNotes: EmployeeNote[];
-  workSchedules: WorkSchedule[];
-  currentUser: User;
-  users: User[];
-  departments: string[];
-  onUpdateAttendance: (record: AttendanceRecord) => void;
-  onAddSickLeave: (leave: Omit<SickLeave, 'id'>) => void;
-  onAddScheduledBreak: (sBreak: Omit<ScheduledBreak, 'id'>) => void;
-  onAddEmployeeNote: (note: Omit<EmployeeNote, 'id'>) => void;
-  onAddOrUpdateWorkSchedule: (schedule: Omit<WorkSchedule, 'id'>) => void;
   onBack: () => void;
 }
 
@@ -125,10 +111,26 @@ const WeeklyScheduler: React.FC<{
 };
 
 
-export const EmployeeFile: React.FC<EmployeeFileProps> = ({
-  employeeId, employees, setEmployees, attendanceRecords, scheduledBreaks, sickLeaves, employeeNotes, workSchedules,
-  currentUser, users, departments, onUpdateAttendance, onAddSickLeave, onAddScheduledBreak, onAddEmployeeNote, onAddOrUpdateWorkSchedule, onBack
-}) => {
+export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }) => {
+  const {
+      employees,
+      attendanceRecords,
+      scheduledBreaks,
+      sickLeaves,
+      employeeNotes,
+      workSchedules,
+      users,
+      departments,
+      // Fix: Add missing properties from context
+      currentUser,
+      updateAttendanceRecord,
+      addSickLeave,
+      addScheduledBreak,
+      addEmployeeNote,
+      addOrUpdateWorkSchedule,
+      updateEmployee,
+  } = useData();
+
   const [activeTab, setActiveTab] = useState('info');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
@@ -165,12 +167,12 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({
   );
 
 
-  if (!employee) {
-    return <div>Empleado no encontrado.</div>;
+  if (!employee || !currentUser) {
+    return <div>Empleado no encontrado o sesión no válida.</div>;
   }
   
   const handleTimeChange = (record: AttendanceRecord, type: 'clockIn' | 'clockOut', value: string) => {
-      onUpdateAttendance({ ...record, [type]: value });
+      updateAttendanceRecord(record.id, { [type]: value });
   };
   
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,7 +185,7 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({
   const handleAddSickLeaveSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       if(newSickLeave.date && newSickLeave.reason){
-          onAddSickLeave({ ...newSickLeave, employeeId, organizationId: employee.organizationId });
+          addSickLeave({ ...newSickLeave, employeeId, organizationId: employee.organizationId });
           setNewSickLeave({ date: '', reason: '' });
       }
   };
@@ -191,7 +193,7 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({
   const handleAddBreakSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       if (newBreak.startDate && newBreak.endDate) {
-          onAddScheduledBreak({ ...newBreak, employeeId, organizationId: employee.organizationId });
+          addScheduledBreak({ ...newBreak, employeeId, organizationId: employee.organizationId });
           setNewBreak({ startDate: '', endDate: '', type: 'Vacaciones' });
       }
   };
@@ -199,13 +201,13 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({
   const handleAddNoteSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       if(newNote.trim()){
-          onAddEmployeeNote({ text: newNote.trim(), employeeId, authorId: currentUser.id, timestamp: new Date().toISOString(), organizationId: employee.organizationId });
+          addEmployeeNote({ text: newNote.trim(), employeeId, authorId: currentUser.id, timestamp: new Date().toISOString(), organizationId: employee.organizationId });
           setNewNote('');
       }
   };
 
   const handleSaveEmployee = (updatedEmployee: Employee) => {
-    setEmployees(prev => prev.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp));
+    updateEmployee(updatedEmployee.id, updatedEmployee);
     setIsEditModalOpen(false);
   };
 
@@ -254,6 +256,8 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({
     </button>
   );
 
+  const departmentNames = useMemo(() => departments.map(d => d.name), [departments]);
+
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
       <button onClick={onBack} className="flex items-center gap-2 text-brand-accent-cyan hover:underline font-semibold">
@@ -267,7 +271,7 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({
               onClose={() => setIsEditModalOpen(false)}
               onSave={handleSaveEmployee}
               employeeToEdit={employee}
-              departments={departments}
+              departments={departmentNames}
               organizationId={employee.organizationId}
           />
       )}
@@ -365,7 +369,7 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({
          {activeTab === 'scheduling' && (
             <div>
                  <h3 className="text-xl font-bold mb-4">Planificación de Turnos Semanales</h3>
-                 <WeeklyScheduler employeeId={employee.id} schedules={employeeSchedules} onSave={onAddOrUpdateWorkSchedule} organizationId={employee.organizationId} />
+                 <WeeklyScheduler employeeId={employee.id} schedules={employeeSchedules} onSave={addOrUpdateWorkSchedule} organizationId={employee.organizationId} />
             </div>
          )}
          {activeTab === 'leaves' && (
