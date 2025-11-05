@@ -162,7 +162,7 @@ export const EvaluationForm: React.FC<EvaluationFormProps> = ({ person, personTy
             <button
               type="submit"
               disabled={isLoading || !isFormReady}
-              className="px-6 py-2 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-indigo/50 transition-all flex items-center gap-2 disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none"
+              className="px-6 py-2 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-indigo/20 transition-all flex items-center gap-2 disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none"
             >
               {isLoading ? (
                 <>

@@ -9,6 +9,33 @@ interface ApplicantFormModalProps {
     departments: string[];
 }
 
+// Componente auxiliar movido fuera para optimizar el rendimiento.
+const FormField: React.FC<{ 
+    name: string, 
+    label: string, 
+    type?: string, 
+    required?: boolean, 
+    value?: string, 
+    children?: React.ReactNode, 
+    onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void 
+}> = ({ name, label, type = 'text', required = false, value, children, onChange }) => (
+     <div>
+        <label htmlFor={name} className="block text-sm font-medium text-brand-text-secondary mb-1">{label}</label>
+        {children ? children : (
+            <input 
+                type={type} 
+                name={name} 
+                id={name} 
+                value={value || ''} 
+                onChange={onChange} 
+                required={required}
+                className="w-full p-2 bg-brand-bg border border-brand-border rounded-md"
+            />
+        )}
+    </div>
+);
+
+
 export const ApplicantFormModal: React.FC<ApplicantFormModalProps> = ({ isOpen, onClose, onSave, applicantToEdit, departments }) => {
     const [formData, setFormData] = useState<Omit<Applicant, 'id'>>({
         name: '',
@@ -76,23 +103,6 @@ export const ApplicantFormModal: React.FC<ApplicantFormModalProps> = ({ isOpen, 
         onSave({ ...formData, id: applicantToEdit?.id || '' }); // id is managed by parent
     };
 
-    const FormField: React.FC<{ name: string, label: string, type?: string, required?: boolean, value?: string, children?: React.ReactNode }> = ({ name, label, type = 'text', required = false, value, children }) => (
-         <div>
-            <label htmlFor={name} className="block text-sm font-medium text-brand-text-secondary mb-1">{label}</label>
-            {children ? children : (
-                <input 
-                    type={type} 
-                    name={name} 
-                    id={name} 
-                    value={value || ''} 
-                    onChange={handleChange} 
-                    required={required}
-                    className="w-full p-2 bg-brand-bg border border-brand-border rounded-md"
-                />
-            )}
-        </div>
-    );
-
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-brand-card border border-brand-border rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
@@ -101,16 +111,16 @@ export const ApplicantFormModal: React.FC<ApplicantFormModalProps> = ({ isOpen, 
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField name="name" label="Nombre Completo" value={formData.name} required />
-                        <FormField name="positionApplied" label="Puesto Solicitado" value={formData.positionApplied} required />
+                        <FormField name="name" label="Nombre Completo" value={formData.name} onChange={handleChange} required />
+                        <FormField name="positionApplied" label="Puesto Solicitado" value={formData.positionApplied} onChange={handleChange} required />
                          <FormField name="department" label="Departamento">
                            <select name="department" id="department" value={formData.department || ''} onChange={handleChange} className="w-full p-2 bg-brand-bg border border-brand-border rounded-md">
                                <option value="">Seleccionar departamento...</option>
                                {departments.map(dept => (<option key={dept} value={dept}>{dept}</option>))}
                            </select>
                        </FormField>
-                        <FormField name="email" label="Email" type="email" value={formData.email} />
-                        <FormField name="phone" label="Teléfono" value={formData.phone} />
+                        <FormField name="email" label="Email" type="email" value={formData.email} onChange={handleChange} />
+                        <FormField name="phone" label="Teléfono" value={formData.phone} onChange={handleChange} />
                     </div>
                     <div>
                          <label className="block text-sm font-medium text-brand-text-secondary mb-1">Adjuntar CV (.pdf, .doc)</label>

@@ -163,7 +163,7 @@ export const CriteriaSetup: React.FC<CriteriaSetupProps> = ({ criteria, setCrite
                      <button
                         onClick={handleUpdateClick}
                         disabled={criteria.length === 0}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-brand-accent-cyan to-brand-accent-blue text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-blue/50 transition-all disabled:bg-slate-800 disabled:text-slate-400 disabled:cursor-not-allowed"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-brand-accent-cyan to-brand-accent-blue text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-blue/20 transition-all disabled:bg-slate-800 disabled:text-slate-400 disabled:cursor-not-allowed"
                      >
                         <SparklesIcon className="w-5 h-5" />
                         Actualizar plantilla "{loadedTemplateName}"
@@ -189,7 +189,7 @@ export const CriteriaSetup: React.FC<CriteriaSetupProps> = ({ criteria, setCrite
                     <button
                         onClick={handleInitiateSave}
                         disabled={criteria.length === 0}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-indigo/50 transition-all disabled:bg-slate-800 disabled:text-slate-400 disabled:cursor-not-allowed"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-indigo/20 transition-all disabled:bg-slate-800 disabled:text-slate-400 disabled:cursor-not-allowed"
                     >
                         <SparklesIcon className="w-5 h-5" />
                         {loadedTemplateId ? 'Guardar como nueva plantilla' : 'Guardar criterios actuales'}

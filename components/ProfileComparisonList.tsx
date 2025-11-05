@@ -70,7 +70,7 @@ export const ProfileComparisonList: React.FC<ProfileComparisonListProps> = ({
           <button
             onClick={handleCompareClick}
             disabled={selectedToCompare.size < 2}
-            className="px-4 py-2 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-indigo/50 transition-all disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none flex items-center gap-2"
+            className="px-4 py-2 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-indigo/20 transition-all disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none flex items-center gap-2"
           >
             <UsersIcon className="w-5 h-5" />
             Comparar ({selectedToCompare.size})

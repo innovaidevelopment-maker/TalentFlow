@@ -88,7 +88,7 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ currentU
             <div className="mt-8 flex justify-center gap-4">
                 <button 
                     onClick={handleOpenAddModal}
-                    className="px-6 py-3 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg shadow-md flex items-center gap-2"
+                    className="px-6 py-3 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg shadow-md flex items-center gap-2 hover:shadow-lg hover:shadow-brand-accent-indigo/20 transition-all"
                 >
                     <PlusIcon className="w-5 h-5" /> Añadir mi primer empleado
                 </button>
@@ -137,7 +137,7 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ currentU
                         )}
                         <button 
                             onClick={handleOpenAddModal}
-                            className="px-4 py-2 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg shadow-md flex items-center justify-center gap-2"
+                            className="px-4 py-2 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg shadow-md flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-brand-accent-indigo/20 transition-all"
                         >
                             <PlusIcon className="w-5 h-5" /> Añadir Empleado
                         </button>

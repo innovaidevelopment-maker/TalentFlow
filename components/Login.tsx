@@ -34,7 +34,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, users, onNavigateToRegist
     return (
         <div className="min-h-screen bg-brand-bg flex items-center justify-center p-4">
             <div className="w-full max-w-md">
-                <div className="bg-brand-card backdrop-blur-sm border border-brand-border rounded-xl p-8 shadow-2xl shadow-brand-accent-purple/10">
+                <div className="bg-brand-card backdrop-blur-sm border border-brand-border rounded-xl p-8 shadow-2xl shadow-blue-900/20">
                     <h1 className="text-3xl font-bold text-center text-brand-text-primary mb-2">Bienvenido</h1>
                     <p className="text-center text-brand-text-secondary mb-8">Inicia sesión para continuar</p>
                     
@@ -67,7 +67,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, users, onNavigateToRegist
                         <div>
                             <button
                                 type="submit"
-                                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-white font-semibold bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo hover:shadow-lg hover:shadow-brand-accent-indigo/50 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-brand-bg focus:ring-brand-accent-indigo"
+                                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-white font-semibold bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo hover:shadow-lg hover:shadow-brand-accent-indigo/20 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-brand-bg focus:ring-brand-accent-indigo"
                             >
                                 Ingresar
                             </button>

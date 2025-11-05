@@ -49,7 +49,7 @@ const HireModal: React.FC<{
                 </div>
                 <div className="flex justify-end gap-4 pt-6">
                     <button onClick={onClose} className="px-4 py-2 bg-slate-700 text-white font-semibold rounded-lg hover:bg-slate-600">Cancelar</button>
-                    <button onClick={handleConfirm} disabled={!department || !role || !employeeCode} className="px-4 py-2 bg-gradient-to-r from-green-500 to-cyan-500 text-white font-semibold rounded-lg disabled:opacity-50">Confirmar Contratación</button>
+                    <button onClick={handleConfirm} disabled={!department || !role || !employeeCode} className="px-4 py-2 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg disabled:opacity-50">Confirmar Contratación</button>
                 </div>
             </div>
         </div>

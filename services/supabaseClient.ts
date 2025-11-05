@@ -2,10 +2,15 @@
 const { createClient } = window.supabase;
 
 // --- ¡IMPORTANTE! ---
-// Estas variables deben ser configuradas en tu entorno de despliegue (ej. Netlify).
+// Estas variables deben ser configuradas en tu entorno de despliegue (ej. Vercel, Netlify).
 // Se accede de forma segura para evitar errores si `process.env` no existe en el navegador.
-const supabaseUrl: string | undefined = (typeof process !== 'undefined' && process.env) ? process.env.SUPABASE_URL : undefined;
-const supabaseAnonKey: string | undefined = (typeof process !== 'undefined' && process.env) ? process.env.SUPABASE_ANON_KEY : undefined;
+// Vercel a menudo usa el prefijo NEXT_PUBLIC_ para las variables de entorno del lado del cliente.
+const supabaseUrl: string | undefined = (typeof process !== 'undefined' && process.env)
+    ? (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL)
+    : undefined;
+const supabaseAnonKey: string | undefined = (typeof process !== 'undefined' && process.env)
+    ? (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY)
+    : undefined;
 
 let supabase;
 export let isSupabaseConfigured = true;

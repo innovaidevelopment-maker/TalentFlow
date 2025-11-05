@@ -10,6 +10,33 @@ interface EmployeeFormModalProps {
     organizationId: string;
 }
 
+// Componente auxiliar movido fuera para optimizar el rendimiento y evitar re-renderizados que causan pérdida de foco.
+const FormField: React.FC<{ 
+    name: string; 
+    label: string; 
+    type?: string; 
+    required?: boolean; 
+    value?: string; 
+    children?: React.ReactNode; 
+    onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void 
+}> = ({ name, label, type = 'text', required = false, value, children, onChange }) => (
+     <div>
+        <label htmlFor={name} className="block text-sm font-medium text-brand-text-secondary mb-1">{label}</label>
+        {children ? children : (
+            <input 
+                type={type} 
+                name={name} 
+                id={name} 
+                value={value || ''} 
+                onChange={onChange} 
+                required={required}
+                className="w-full p-2 bg-brand-bg border border-brand-border rounded-md"
+            />
+        )}
+    </div>
+);
+
+
 export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ isOpen, onClose, onSave, employeeToEdit, departments, organizationId }) => {
     // Fix: Add missing organizationId to initial state
     const [formData, setFormData] = useState<Omit<Employee, 'id'>>({
@@ -68,22 +95,6 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ isOpen, on
         onSave({ ...formData, id: employeeToEdit?.id || '' }); // id is managed by parent
     };
     
-    const FormField: React.FC<{ name: string, label: string, type?: string, required?: boolean, value?: string, children?: React.ReactNode }> = ({ name, label, type = 'text', required = false, value, children }) => (
-         <div>
-            <label htmlFor={name} className="block text-sm font-medium text-brand-text-secondary mb-1">{label}</label>
-            {children ? children : (
-                <input 
-                    type={type} 
-                    name={name} 
-                    id={name} 
-                    value={value || ''} 
-                    onChange={handleChange} 
-                    required={required}
-                    className="w-full p-2 bg-brand-bg border border-brand-border rounded-md"
-                />
-            )}
-        </div>
-    );
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -95,31 +106,31 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ isOpen, on
                     {/* Section: Professional Info */}
                     <fieldset className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <legend className="text-lg font-semibold text-brand-accent-cyan col-span-full mb-2">Información Profesional</legend>
-                        <FormField name="name" label="Nombre Completo" value={formData.name} required />
-                        <FormField name="role" label="Puesto" value={formData.role} required />
+                        <FormField name="name" label="Nombre Completo" value={formData.name} onChange={handleChange} required />
+                        <FormField name="role" label="Puesto" value={formData.role} onChange={handleChange} required />
                         <FormField name="department" label="Departamento">
                              <select name="department" id="department" value={formData.department} onChange={handleChange} className="w-full p-2 bg-brand-bg border border-brand-border rounded-md">
                                 <option value="">Seleccionar...</option>
                                 {departments.map(dept => (<option key={dept} value={dept}>{dept}</option>))}
                             </select>
                         </FormField>
-                        <FormField name="employeeCode" label="Código Empleado" value={formData.employeeCode} />
-                        <FormField name="hireDate" label="Fecha Contratación" type="date" value={formData.hireDate} />
+                        <FormField name="employeeCode" label="Código Empleado" value={formData.employeeCode} onChange={handleChange} />
+                        <FormField name="hireDate" label="Fecha Contratación" type="date" value={formData.hireDate} onChange={handleChange} />
                     </fieldset>
 
                     {/* Section: Contact Info */}
                     <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <legend className="text-lg font-semibold text-brand-accent-cyan col-span-full mb-2">Información de Contacto</legend>
-                        <FormField name="email" label="Email" type="email" value={formData.email} />
-                        <FormField name="phone" label="Teléfono" value={formData.phone} />
-                        <FormField name="address" label="Dirección" value={formData.address} />
+                        <FormField name="email" label="Email" type="email" value={formData.email} onChange={handleChange} />
+                        <FormField name="phone" label="Teléfono" value={formData.phone} onChange={handleChange} />
+                        <FormField name="address" label="Dirección" value={formData.address} onChange={handleChange} />
                     </fieldset>
 
                     {/* Section: Emergency Contact */}
                     <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <legend className="text-lg font-semibold text-brand-accent-cyan col-span-full mb-2">Contacto de Emergencia</legend>
-                        <FormField name="emergencyContactName" label="Nombre Contacto" value={formData.emergencyContactName} />
-                        <FormField name="emergencyContactPhone" label="Teléfono Contacto" value={formData.emergencyContactPhone} />
+                        <FormField name="emergencyContactName" label="Nombre Contacto" value={formData.emergencyContactName} onChange={handleChange} />
+                        <FormField name="emergencyContactPhone" label="Teléfono Contacto" value={formData.emergencyContactPhone} onChange={handleChange} />
                     </fieldset>
                     
                     {/* Section: Documents & Notes */}

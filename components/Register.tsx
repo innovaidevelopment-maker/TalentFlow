@@ -45,7 +45,7 @@ export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogi
     return (
         <div className="min-h-screen bg-brand-bg flex items-center justify-center p-4">
             <div className="w-full max-w-md">
-                <div className="bg-brand-card backdrop-blur-sm border border-brand-border rounded-xl p-8 shadow-2xl shadow-brand-accent-purple/10">
+                <div className="bg-brand-card backdrop-blur-sm border border-brand-border rounded-xl p-8 shadow-2xl shadow-blue-900/20">
                     <h1 className="text-3xl font-bold text-center text-brand-text-primary mb-2">Crear Cuenta de Empresa</h1>
                     <p className="text-center text-brand-text-secondary mb-8">Regístrate para empezar a gestionar tu equipo.</p>
                     
@@ -106,7 +106,7 @@ export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogi
                         <div>
                             <button
                                 type="submit"
-                                className="w-full flex justify-center mt-2 py-3 px-4 border border-transparent rounded-lg shadow-md text-white font-semibold bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo hover:shadow-lg hover:shadow-brand-accent-indigo/50 transition-all"
+                                className="w-full flex justify-center mt-2 py-3 px-4 border border-transparent rounded-lg shadow-md text-white font-semibold bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo hover:shadow-lg hover:shadow-brand-accent-indigo/20 transition-all"
                             >
                                 Registrar Empresa
                             </button>
