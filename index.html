@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Evaluador de Talento con IA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+              'brand-bg': '#0D1117',
+              'brand-card': 'rgba(22, 27, 34, 0.5)',
+              'brand-border': 'rgba(139, 148, 158, 0.3)',
+              'brand-text-primary': '#E6EDF3',
+              'brand-text-secondary': '#8B949E',
+              'brand-accent-cyan': '#22d3ee',
+              'brand-accent-blue': '#3b82f6',
+              'brand-accent-purple': '#8b5cf6',
+              'brand-accent-indigo': '#4f46e5',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      /* Estilos para la generación de PDF */
+      .pdf-generation-mode {
+        background-color: white !important;
+        color: black !important;
+        padding: 20px;
+        max-width: none !important;
+      }
+      .pdf-generation-mode .bg-brand-card,
+      .pdf-generation-mode .bg-white\/5,
+      .pdf-generation-mode .bg-white\/10 {
+        background-color: #f8f9fa !important;
+        border-color: #dee2e6 !important;
+        box-shadow: none !important;
+      }
+      .pdf-generation-mode [class*="text-brand-text-"] {
+        color: #212529 !important;
+      }
+      .pdf-generation-mode [class*="border-brand-border"] {
+        border-color: #dee2e6 !important;
+      }
+      .pdf-generation-mode .prose {
+        color: #333 !important;
+      }
+       .pdf-generation-mode .recharts-text,
+       .pdf-generation-mode .recharts-legend-item-text {
+        fill: #333 !important;
+      }
+      .pdf-generation-mode [class*="bg-gradient-to-r"] {
+        background-image: none !important;
+        color: #0d6efd !important;
+      }
+       .pdf-generation-mode .text-red-400 { color: #dc3545 !important; }
+       .pdf-generation-mode .text-yellow-400 { color: #ffc107 !important; }
+       .pdf-generation-mode .text-green-400 { color: #198754 !important; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0",
+    "recharts": "https://aistudiocdn.com/recharts@^3.3.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-brand-bg text-brand-text-primary font-sans">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
