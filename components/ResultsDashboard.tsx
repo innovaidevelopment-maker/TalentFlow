@@ -142,7 +142,11 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, pers
                     <PolarAngleAxis dataKey="subject" tick={{ fill: '#8B949E' }} />
                     <PolarRadiusAxis angle={30} domain={[0, 10]} tick={{ fill: '#8B949E' }}/>
                     <Radar name={person.name} dataKey="score" stroke="#34D399" fill="#34D399" fillOpacity={0.6} />
-                    <Tooltip contentStyle={{ backgroundColor: '#0D1117', border: '1px solid #8B949E' }} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1C2127', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem' }} 
+                      labelStyle={{ color: '#F0F6FC', fontWeight: 'bold' }} 
+                      itemStyle={{ color: '#8A94A3' }}
+                    />
                     <Legend wrapperStyle={{ color: '#E6EDF3' }}/>
                   </RadarChart>
                 </ResponsiveContainer>
@@ -171,7 +175,12 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, pers
                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(139, 148, 158, 0.2)" />
                  <XAxis dataKey="date" tick={{ fill: '#8B949E' }} />
                  <YAxis domain={[0, 10]} tick={{ fill: '#8B949E' }} />
-                 <Tooltip contentStyle={{ backgroundColor: '#0D1117', border: '1px solid #8B949E' }} />
+                 <Tooltip 
+                  contentStyle={{ backgroundColor: '#1C2127', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem' }} 
+                  labelStyle={{ color: '#F0F6FC', fontWeight: 'bold' }} 
+                  itemStyle={{ color: '#8A94A3' }} 
+                  cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
+                />
                  <Legend wrapperStyle={{ color: '#E6EDF3' }} />
                  <Line type="monotone" dataKey="score" name="Puntuación General" stroke="#34D399" strokeWidth={2} activeDot={{ r: 8 }} dot={{ fill: '#34D399' }} />
                </LineChart>

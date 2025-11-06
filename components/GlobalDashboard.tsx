@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 // @ts-ignore
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import type { EvaluationResult, Employee, ScheduledEvaluation, User } from '../types';
@@ -19,8 +19,27 @@ const COLORS = {
   'Indeterminado': '#64748b' // slate-500
 };
 
+// Función de renderizado para las etiquetas de porcentaje dentro del gráfico
+const RADIAN = Math.PI / 180;
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+    // No renderizar etiqueta para porciones muy pequeñas para evitar desorden
+    if (!percent || percent < 0.05) {
+        return null;
+    }
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+        <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontWeight="bold" fontSize="14">
+            {`${(percent * 100).toFixed(0)}%`}
+        </text>
+    );
+};
+
 export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ evaluations, employees, scheduledEvals, currentUser, users }) => {
   const [filter, setFilter] = useState<{ type: 'department' | 'level' | null; value: string | null }>({ type: null, value: null });
+  const [pieActiveIndex, setPieActiveIndex] = useState(-1);
 
   const employeeEvaluations = useMemo(() => evaluations.filter(e => e.personType === 'employee'), [evaluations]);
 
@@ -67,6 +86,28 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ evaluations, e
     return employeeEvaluations;
   }, [employeeEvaluations, latestEvaluations, employees, filter]);
 
+  // Level Distribution based on filtered LATEST evaluations
+  const levelDistribution = useMemo(() => {
+    const dist = filteredLatestEvaluations.reduce((acc, ev) => {
+      acc[ev.level] = (acc[ev.level] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    // Ordenar para tener un orden consistente, lo que previene bugs de renderizado en la librería de gráficos.
+    return Object.entries(dist).map(([name, value]) => ({ name, value })).sort((a, b) => {
+        const order: Record<string, number> = { 'Alto': 1, 'Medio': 2, 'Bajo': 3, 'Indeterminado': 4 };
+        return (order[a.name] || 99) - (order[b.name] || 99);
+    });
+  }, [filteredLatestEvaluations]);
+
+  useEffect(() => {
+      if (filter.type === 'level' && filter.value) {
+          const index = levelDistribution.findIndex(d => d.name === filter.value);
+          setPieActiveIndex(index);
+      } else {
+          setPieActiveIndex(-1);
+      }
+  }, [filter, levelDistribution]);
+
   // KPIs based on filtered LATEST evaluations
   const kpis = useMemo(() => {
     const totalEvaluations = filteredLatestEvaluations.length;
@@ -80,15 +121,6 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ evaluations, e
     const averagePotentialLabel = potentialLevels[Math.round(averagePotentialNum) - 1] || 'N/A';
     
     return { totalEvaluations, evaluatedEmployeeCount, averageScore, averagePotentialLabel };
-  }, [filteredLatestEvaluations]);
-
-  // Level Distribution based on filtered LATEST evaluations
-  const levelDistribution = useMemo(() => {
-    const dist = filteredLatestEvaluations.reduce((acc, ev) => {
-      acc[ev.level] = (acc[ev.level] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    return Object.entries(dist).map(([name, value]) => ({ name, value }));
   }, [filteredLatestEvaluations]);
 
   // Department Chart data based on LATEST evaluations (unfiltered)
@@ -161,20 +193,16 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ evaluations, e
       }
   };
 
-  const handlePieClick = (data: any) => {
-      if (data && data.name) {
-          if (filter.type === 'level' && filter.value === data.name) {
-            setFilter({ type: null, value: null }); // Un-filter if clicked again
-          } else {
-            setFilter({ type: 'level', value: data.name });
-          }
+  const handlePieClick = (data: any, index: number) => {
+      const newIndex = index === pieActiveIndex ? -1 : index;
+      setPieActiveIndex(newIndex);
+      
+      if (newIndex === -1) {
+          setFilter({ type: null, value: null });
+      } else {
+          setFilter({ type: 'level', value: data.name });
       }
   };
-  
-  const activePieIndex = useMemo(() => {
-      if(filter.type !== 'level') return -1;
-      return levelDistribution.findIndex(d => d.name === filter.value);
-  }, [filter, levelDistribution]);
   
   if (employeeEvaluations.length === 0) {
     return (
@@ -224,11 +252,33 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ evaluations, e
             <h3 className="text-xl font-semibold text-brand-text-primary mb-4">Distribución por Nivel</h3>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie data={levelDistribution} cx="50%" cy="50%" outerRadius={100} dataKey="value" onClick={handlePieClick} activeIndex={activePieIndex} activeShape={(props: any) => { const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload } = props; return <g><text x={cx} y={cy} dy={8} textAnchor="middle" fill="#fff" fontSize="16">{payload.name}</text><path d={`M${cx},${cy}L${Math.cos(-startAngle*(Math.PI/180)) * (outerRadius+5) + cx},${Math.sin(-startAngle*(Math.PI/180)) * (outerRadius+5) + cy}A${outerRadius+5},${outerRadius+5},0,${endAngle - startAngle > 180 ? 1 : 0},1,${Math.cos(-endAngle*(Math.PI/180)) * (outerRadius+5) + cx},${Math.sin(-endAngle*(Math.PI/180)) * (outerRadius+5) + cy}Z`} stroke={fill} fill={fill} opacity={0.3} /></g> }} labelLine={false} label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`} className="cursor-pointer">
+                <Pie 
+                  data={levelDistribution} 
+                  cx="50%" 
+                  cy="50%" 
+                  outerRadius={100}
+                  innerRadius={60}
+                  dataKey="value" 
+                  onClick={handlePieClick} 
+                  activeIndex={pieActiveIndex} 
+                  labelLine={false}
+                  label={renderCustomizedLabel}
+                  className="cursor-pointer"
+                >
                     {levelDistribution.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS]} />)}
                 </Pie>
-                <Tooltip contentStyle={{ backgroundColor: '#0D1117', border: '1px solid #8B949E' }} />
-                <Legend formatter={(value, entry) => <span style={{ color: '#E6EDF3' }}>{value}</span>} />
+                {pieActiveIndex > -1 && levelDistribution[pieActiveIndex] && (
+                  <g>
+                      <text x="50%" y="50%" textAnchor="middle" dominantBaseline="central" fill="#FFFFFF" fontSize="16" fontWeight="bold">
+                          {`${levelDistribution[pieActiveIndex].name}: ${levelDistribution[pieActiveIndex].value}`}
+                      </text>
+                  </g>
+                )}
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1C2127', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem' }}
+                  itemStyle={{ color: '#F0F6FC' }}
+                />
+                <Legend formatter={(value) => <span style={{ color: '#E6EDF3' }}>{value}</span>} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -239,8 +289,13 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ evaluations, e
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(139, 148, 158, 0.2)" />
                 <XAxis dataKey="month" tick={{ fill: '#8B949E' }} />
                 <YAxis domain={[0, 10]} tick={{ fill: '#8B949E' }} />
-                <Tooltip contentStyle={{ backgroundColor: '#0D1117', border: '1px solid #8B949E' }} />
-                <Legend formatter={(value, entry) => <span style={{ color: '#E6EDF3' }}>{value}</span>} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1C2127', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem' }} 
+                  labelStyle={{ color: '#F0F6FC', fontWeight: 'bold' }} 
+                  itemStyle={{ color: '#8A94A3' }} 
+                  cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
+                />
+                <Legend formatter={(value) => <span style={{ color: '#E6EDF3' }}>{value}</span>} />
                 <Line type="monotone" dataKey="Puntuación Media" stroke="#34D399" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
@@ -254,8 +309,13 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ evaluations, e
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(139, 148, 158, 0.2)" />
               <XAxis dataKey="name" tick={{ fill: '#8B949E' }} />
               <YAxis domain={[0, 10]} tick={{ fill: '#8B949E' }} />
-              <Tooltip contentStyle={{ backgroundColor: '#0D1117', border: '1px solid #8B949E' }} />
-              <Legend formatter={(value, entry) => <span style={{ color: '#E6EDF3' }}>{value}</span>} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#1C2127', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem' }} 
+                labelStyle={{ color: '#F0F6FC', fontWeight: 'bold' }} 
+                itemStyle={{ color: '#8A94A3' }} 
+                cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
+              />
+              <Legend formatter={(value) => <span style={{ color: '#E6EDF3' }}>{value}</span>} />
               <Bar dataKey="Puntuación Promedio" className="cursor-pointer">
                   {departmentChartData.map((entry) => (
                       <Cell key={entry.name} fill={filter.type === 'department' && filter.value === entry.name ? '#22d3ee' : '#34D399'} />

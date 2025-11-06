@@ -267,7 +267,12 @@ export const AttendanceAnalyticsDashboard: React.FC<AttendanceAnalyticsDashboard
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(139, 148, 158, 0.2)" />
                       <XAxis dataKey="date" tick={{ fill: '#8B949E' }} />
                       <YAxis tick={{ fill: '#8B949E' }} allowDecimals={false} />
-                      <Tooltip contentStyle={{ backgroundColor: '#0D1117', border: '1px solid #8B949E' }} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#1C2127', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem' }} 
+                        labelStyle={{ color: '#F0F6FC', fontWeight: 'bold' }} 
+                        itemStyle={{ color: '#8A94A3' }} 
+                        cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
+                      />
                       <Legend wrapperStyle={{ color: '#E6EDF3' }}/>
                       <Line type="monotone" dataKey="Presente" stroke="#10b981" />
                       <Line type="monotone" dataKey="Atrasado" stroke="#f59e0b" />
@@ -283,7 +288,13 @@ export const AttendanceAnalyticsDashboard: React.FC<AttendanceAnalyticsDashboard
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(139, 148, 158, 0.2)" />
                         <XAxis type="number" domain={[0, 100]} tick={{ fill: '#8B949E' }} />
                         <YAxis type="category" dataKey="name" width={100} tick={{ fill: '#8B949E' }} />
-                        <Tooltip contentStyle={{ backgroundColor: '#0D1117', border: '1px solid #8B949E' }} formatter={(value) => `${Number(value).toFixed(1)}%`} />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: '#1C2127', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem' }} 
+                          labelStyle={{ color: '#F0F6FC', fontWeight: 'bold' }} 
+                          itemStyle={{ color: '#8A94A3' }} 
+                          cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }} 
+                          formatter={(value: number) => `${value.toFixed(1)}%`}
+                        />
                         <Bar dataKey="Tasa de Asistencia" fill="#34D399" />
                     </BarChart>
                 </ResponsiveContainer>

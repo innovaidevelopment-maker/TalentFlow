@@ -106,7 +106,11 @@ export const ComparisonDashboard: React.FC<ComparisonDashboardProps> = ({ person
                       <PolarGrid stroke="rgba(139, 148, 158, 0.4)" />
                       <PolarAngleAxis dataKey="subject" tick={{ fill: '#8B949E' }} />
                       <PolarRadiusAxis angle={30} domain={[0, 10]} tick={{ fill: '#8B949E' }} />
-                      <Tooltip contentStyle={{ backgroundColor: '#0D1117', border: '1px solid #8B949E' }} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#1C2127', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem' }} 
+                        labelStyle={{ color: '#F0F6FC', fontWeight: 'bold' }} 
+                        itemStyle={{ color: '#8A94A3' }}
+                      />
                       <Legend wrapperStyle={{ color: '#E6EDF3' }}/>
                       {latestEvaluations.map((ev, index) => {
                           const person = selectedPersons.find(p => p.id === ev.personId);
