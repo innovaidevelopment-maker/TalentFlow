@@ -346,11 +346,11 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
                 </div>
             </div>
 
-            <div className="flex gap-6 overflow-x-auto pb-4 h-[70vh]">
+            <div className="flex space-x-6 overflow-x-auto pb-4">
                 {statuses.map(status => (
                     <div 
                         key={status} 
-                        className={`flex-shrink-0 w-72 md:w-80 bg-brand-card/50 border border-brand-border/50 rounded-xl flex flex-col transition-colors duration-300 ${draggedOverColumn === status ? 'bg-brand-accent-blue/20' : ''}`}
+                        className={`bg-brand-card/50 border border-brand-border/50 rounded-xl flex flex-col w-72 flex-shrink-0 h-[75vh] transition-colors duration-300 ${draggedOverColumn === status ? 'bg-brand-accent-blue/20' : ''}`}
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDrop(e, status)}
                         onDragEnter={() => handleDragEnter(status)}
