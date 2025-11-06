@@ -11,7 +11,7 @@ interface EmployeeListProps {
 
 export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onSelectEmployee, departments, evaluations }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [view, setView] = useState<'list' | 'kanban'>('list');
+  const [view, setView] = useState<'list' | 'kanban'>('kanban'); // Default to Kanban view
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [evaluationStatusFilter, setEvaluationStatusFilter] = useState<'all' | 'recent' | 'not_recent'>('all');
 
@@ -75,14 +75,14 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onSelectE
     <div className="flex items-center gap-1 p-1 bg-brand-bg rounded-lg border border-brand-border">
       <button
         onClick={() => setView('list')}
-        className={`px-3 py-1 text-sm font-semibold rounded-md flex items-center gap-2 transition-colors ${view === 'list' ? 'bg-brand-accent-blue/20 text-brand-accent-cyan' : 'text-brand-text-secondary hover:bg-slate-700'}`}
+        className={`px-3 py-1 text-sm font-semibold rounded-md flex items-center gap-2 transition-colors ${view === 'list' ? 'bg-brand-accent-blue text-white' : 'text-brand-text-secondary hover:bg-slate-700'}`}
       >
         <ListBulletIcon className="w-5 h-5" />
         Lista
       </button>
       <button
         onClick={() => setView('kanban')}
-        className={`px-3 py-1 text-sm font-semibold rounded-md flex items-center gap-2 transition-colors ${view === 'kanban' ? 'bg-brand-accent-blue/20 text-brand-accent-cyan' : 'text-brand-text-secondary hover:bg-slate-700'}`}
+        className={`px-3 py-1 text-sm font-semibold rounded-md flex items-center gap-2 transition-colors ${view === 'kanban' ? 'bg-brand-accent-blue text-white' : 'text-brand-text-secondary hover:bg-slate-700'}`}
       >
         <ViewColumnsIcon className="w-5 h-5" />
         Kanban
@@ -111,7 +111,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onSelectE
                   <svg className="h-5 w-5 text-brand-text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               </div>
           </div>
-          <div className="flex gap-4 w-full md:w-auto flex-wrap">
+          <div className="flex gap-4 w-full md:w-auto flex-wrap md:flex-nowrap">
               <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)} className="p-3 border border-brand-border bg-brand-bg rounded-lg shadow-sm text-sm text-brand-text-primary focus:ring-brand-accent-blue focus:border-brand-accent-blue flex-grow">
                   <option value="all">Todos los Departamentos</option>
                   {departments.map(dept => (<option key={dept} value={dept}>{dept}</option>))}
@@ -167,61 +167,67 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onSelectE
 
         {view === 'kanban' && (
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-              <div className="bg-brand-card/50 border border-brand-border/50 rounded-xl p-4">
+              <div className="bg-brand-card/50 border border-brand-border/50 rounded-xl p-4 flex flex-col">
                   <h4 className="font-bold text-lg text-brand-text-primary mb-4 pb-2 border-b border-brand-border">
                     Sin Evaluación Reciente <span className="text-sm font-normal text-brand-text-secondary">({employeesWithoutRecentEval.length})</span>
                   </h4>
-                  <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                    {employeesWithoutRecentEval.map(employee => {
-                       const evalInfo = employeeEvalInfo.get(employee.id);
-                       const hasBeenEvaluated = !!evalInfo?.lastEvaluationDate;
-                      return (
-                      <div key={employee.id} className="bg-brand-card backdrop-blur-sm border border-brand-border rounded-xl p-4 transition-all duration-300 hover:border-brand-accent-cyan/50">
-                         <div>
-                            <p className="font-bold text-md text-brand-text-primary">{employee.name}</p>
-                            <p className="text-sm text-brand-text-secondary">{employee.role}</p>
-                            <div className="flex items-center gap-2 mt-1 text-xs text-brand-text-secondary/80">
-                                <ClockIcon className="w-3 h-3" />
-                                <span>{hasBeenEvaluated ? `Última eval: ${evalInfo.lastEvaluationDate.toLocaleDateString()}` : 'Sin evaluar'}</span>
-                            </div>
+                  <div className="space-y-4 flex-grow overflow-y-auto pr-2 -mr-2">
+                    {employeesWithoutRecentEval.length > 0 ? (
+                      employeesWithoutRecentEval.map(employee => {
+                         const evalInfo = employeeEvalInfo.get(employee.id);
+                         const hasBeenEvaluated = !!evalInfo?.lastEvaluationDate;
+                        return (
+                        <div key={employee.id} className="bg-brand-card backdrop-blur-sm border border-brand-border rounded-xl p-4 transition-all duration-300 hover:border-brand-accent-cyan/50">
+                           <div>
+                              <p className="font-bold text-md text-brand-text-primary">{employee.name}</p>
+                              <p className="text-sm text-brand-text-secondary">{employee.role}</p>
+                              <div className="flex items-center gap-2 mt-1 text-xs text-brand-text-secondary/80">
+                                  <ClockIcon className="w-3 h-3" />
+                                  <span>{hasBeenEvaluated ? `Última eval: ${evalInfo.lastEvaluationDate.toLocaleDateString()}` : 'Sin evaluar'}</span>
+                              </div>
+                          </div>
+                          <button
+                            onClick={() => onSelectEmployee(employee.id, 'employee')}
+                            className="w-full mt-3 px-4 py-2 text-sm bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-bold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-cyan/20 transition-all"
+                          >
+                            {hasBeenEvaluated ? 'Re-evaluar' : 'Evaluar'}
+                          </button>
                         </div>
-                        <button
-                          onClick={() => onSelectEmployee(employee.id, 'employee')}
-                          className="w-full mt-3 px-4 py-2 text-sm bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-bold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-cyan/20 transition-all"
-                        >
-                          {hasBeenEvaluated ? 'Re-evaluar' : 'Evaluar'}
-                        </button>
-                      </div>
-                    )})}
-                    {employeesWithoutRecentEval.length === 0 && <p className="text-sm text-center text-brand-text-secondary py-4">No hay empleados por evaluar en esta vista.</p>}
+                      )})
+                    ) : (
+                       <p className="text-sm text-center text-brand-text-secondary py-4">No hay empleados por evaluar en esta vista.</p>
+                    )}
                   </div>
               </div>
-              <div className="bg-brand-card/50 border border-brand-border/50 rounded-xl p-4">
+              <div className="bg-brand-card/50 border border-brand-border/50 rounded-xl p-4 flex flex-col">
                   <h4 className="font-bold text-lg text-brand-text-primary mb-4 pb-2 border-b border-brand-border">
                     Evaluados Recientemente <span className="text-sm font-normal text-brand-text-secondary">({employeesWithRecentEval.length})</span>
                   </h4>
-                  <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                    {employeesWithRecentEval.map(employee => {
-                      const evalInfo = employeeEvalInfo.get(employee.id);
-                      return (
-                      <div key={employee.id} className="bg-brand-card backdrop-blur-sm border border-brand-border rounded-xl p-4 transition-all duration-300 hover:border-brand-accent-purple/50">
-                         <div>
-                            <p className="font-bold text-md text-brand-text-primary">{employee.name}</p>
-                            <p className="text-sm text-brand-text-secondary">{employee.role}</p>
-                            <div className="flex items-center gap-2 mt-1 text-xs text-brand-text-secondary/80">
-                                <ClockIcon className="w-3 h-3" />
-                                <span>{evalInfo?.lastEvaluationDate ? `Última eval: ${evalInfo.lastEvaluationDate.toLocaleDateString()}` : 'Sin evaluar'}</span>
-                            </div>
+                  <div className="space-y-4 flex-grow overflow-y-auto pr-2 -mr-2">
+                     {employeesWithRecentEval.length > 0 ? (
+                      employeesWithRecentEval.map(employee => {
+                        const evalInfo = employeeEvalInfo.get(employee.id);
+                        return (
+                        <div key={employee.id} className="bg-brand-card backdrop-blur-sm border border-brand-border rounded-xl p-4 transition-all duration-300 hover:border-brand-accent-purple/50">
+                           <div>
+                              <p className="font-bold text-md text-brand-text-primary">{employee.name}</p>
+                              <p className="text-sm text-brand-text-secondary">{employee.role}</p>
+                              <div className="flex items-center gap-2 mt-1 text-xs text-brand-text-secondary/80">
+                                  <ClockIcon className="w-3 h-3" />
+                                  <span>{evalInfo?.lastEvaluationDate ? `Última eval: ${evalInfo.lastEvaluationDate.toLocaleDateString()}` : 'Sin evaluar'}</span>
+                              </div>
+                          </div>
+                          <button
+                            onClick={() => onSelectEmployee(employee.id, 'employee')}
+                            className="w-full mt-3 px-4 py-2 text-sm bg-gradient-to-r from-brand-accent-blue to-brand-accent-purple text-white font-bold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-purple/20 transition-all"
+                          >
+                            Re-evaluar
+                          </button>
                         </div>
-                        <button
-                          onClick={() => onSelectEmployee(employee.id, 'employee')}
-                          className="w-full mt-3 px-4 py-2 text-sm bg-gradient-to-r from-brand-accent-blue to-brand-accent-purple text-white font-bold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-purple/20 transition-all"
-                        >
-                          Re-evaluar
-                        </button>
-                      </div>
-                    )})}
-                     {employeesWithRecentEval.length === 0 && <p className="text-sm text-center text-brand-text-secondary py-4">Ningún empleado evaluado recientemente en esta vista.</p>}
+                      )})
+                    ) : (
+                      <p className="text-sm text-center text-brand-text-secondary py-4">Ningún empleado evaluado recientemente en esta vista.</p>
+                    )}
                   </div>
               </div>
            </div>
