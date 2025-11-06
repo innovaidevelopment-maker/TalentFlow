@@ -146,19 +146,18 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
     const [draggedOverColumn, setDraggedOverColumn] = useState<ApplicantStatus | null>(null);
     const [selectedApplicantForPanel, setSelectedApplicantForPanel] = useState<Applicant | null>(null);
 
-    // Advanced filters state
     const [statusFilter, setStatusFilter] = useState<ApplicantStatus | 'all'>('all');
     const [departmentFilter, setDepartmentFilter] = useState<string>('all');
     const [dateFilter, setDateFilter] = useState<string>('all');
 
     const statuses: ApplicantStatus[] = ['Nuevo', 'En Proceso', 'Oferta', 'Contratado', 'Rechazado'];
     
-    const statusStyles: Record<ApplicantStatus, { bg: string; text: string; name: string }> = {
-        'Nuevo': { bg: 'bg-blue-500/10', text: 'text-blue-400', name: 'Nuevo' },
-        'En Proceso': { bg: 'bg-cyan-500/10', text: 'text-cyan-400', name: 'En Proceso' },
-        'Oferta': { bg: 'bg-yellow-500/10', text: 'text-yellow-400', name: 'Oferta' },
-        'Contratado': { bg: 'bg-green-500/10', text: 'text-green-400', name: 'Contratado' },
-        'Rechazado': { bg: 'bg-red-500/10', text: 'text-red-400', name: 'Rechazado' },
+    const statusStyles: Record<ApplicantStatus, { pill: string; name: string }> = {
+        'Nuevo': { pill: 'bg-blue-200 text-blue-800', name: 'NUEVO' },
+        'En Proceso': { pill: 'bg-cyan-200 text-cyan-800', name: 'EN PROCESO' },
+        'Oferta': { pill: 'bg-yellow-200 text-yellow-800', name: 'OFERTA' },
+        'Contratado': { pill: 'bg-green-200 text-green-800', name: 'CONTRATADO' },
+        'Rechazado': { pill: 'bg-red-200 text-red-800', name: 'RECHAZADO' },
     };
 
     const dateFilterOptions = [
@@ -171,52 +170,32 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
 
     const filteredApplicants = useMemo(() => {
         return applicants.filter(applicant => {
-            // Text search
             const term = searchTerm.toLowerCase();
             const matchesSearch = (
                 applicant.name.toLowerCase().includes(term) ||
                 applicant.positionApplied.toLowerCase().includes(term) ||
                 (applicant.department && applicant.department.toLowerCase().includes(term))
             );
-
-            // Status filter
             const matchesStatus = statusFilter === 'all' || applicant.status === statusFilter;
-
-            // Department filter
             const matchesDepartment = departmentFilter === 'all' || applicant.department === departmentFilter;
-
-            // Date filter
             const matchesDate = (() => {
                 if (dateFilter === 'all') return true;
-                
                 const applicantDateUTC = new Date(applicant.applicationDate);
                 const applicantDate = new Date(applicantDateUTC.getUTCFullYear(), applicantDateUTC.getUTCMonth(), applicantDateUTC.getUTCDate());
-
                 const now = new Date();
                 const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                 let startDate = new Date(today);
-
                 switch (dateFilter) {
-                    case 'today':
-                        return applicantDate.getTime() === today.getTime();
-                    case '7days':
-                        startDate.setDate(today.getDate() - 6);
-                        return applicantDate >= startDate;
-                    case '30days':
-                        startDate.setDate(today.getDate() - 29);
-                        return applicantDate >= startDate;
-                    case 'this_month':
-                        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                        return applicantDate >= startDate;
-                    default:
-                        return true;
+                    case 'today': return applicantDate.getTime() === today.getTime();
+                    case '7days': startDate.setDate(today.getDate() - 6); return applicantDate >= startDate;
+                    case '30days': startDate.setDate(today.getDate() - 29); return applicantDate >= startDate;
+                    case 'this_month': startDate = new Date(now.getFullYear(), now.getMonth(), 1); return applicantDate >= startDate;
+                    default: return true;
                 }
             })();
-
             return matchesSearch && matchesStatus && matchesDepartment && matchesDate;
         });
     }, [applicants, searchTerm, statusFilter, departmentFilter, dateFilter]);
-
 
     const handleOpenAddModal = () => {
         setApplicantToEdit(null);
@@ -256,7 +235,6 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
         }
     };
     
-    // Drag and Drop Handlers
     const handleDragStart = (e: React.DragEvent<HTMLDivElement>, applicantId: string) => {
         e.dataTransfer.setData('applicantId', applicantId);
         e.currentTarget.style.opacity = '0.5';
@@ -267,183 +245,83 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
         setDraggedOverColumn(null);
     };
     
-    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-    };
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
     
     const handleDrop = (e: React.DragEvent<HTMLDivElement>, status: ApplicantStatus) => {
         e.preventDefault();
         const applicantId = e.dataTransfer.getData('applicantId');
-        if (applicantId) {
-            handleChangeStatus(applicantId, status);
-        }
+        if (applicantId) handleChangeStatus(applicantId, status);
         setDraggedOverColumn(null);
     };
     
-    const handleDragEnter = (status: ApplicantStatus) => {
-        setDraggedOverColumn(status);
-    };
+    const handleDragEnter = (status: ApplicantStatus) => setDraggedOverColumn(status);
+    const departmentNames = useMemo(() => departments.map(d => d.name), [departments]);
 
     return (
         <div className="p-4 md:p-6 space-y-6">
-            <div className="flex flex-col md:flex-row justify-between md:items-start gap-4">
-                <div>
-                    <h2 className="text-3xl font-bold text-brand-text-primary">Panel de Reclutamiento</h2>
-                    <p className="text-brand-text-secondary">Gestiona el flujo de aspirantes desde la postulación hasta la contratación.</p>
-                </div>
-            </div>
+            <h2 className="text-3xl font-bold text-brand-text-primary">Panel de Reclutamiento</h2>
+            <p className="text-brand-text-secondary -mt-4">Gestiona el flujo de aspirantes desde la postulación hasta la contratación.</p>
             
-            <div className="space-y-4">
-                <div className="bg-brand-card/50 border border-brand-border/50 rounded-xl p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {/* Search Applicant */}
-                        <div className="lg:col-span-1">
-                            <label htmlFor="search-applicant" className="block text-xs font-medium text-brand-text-secondary mb-1">Buscar Aspirante</label>
-                            <div className="relative">
-                                <input id="search-applicant" type="text" placeholder="Nombre, puesto..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full p-3 pl-10 border border-brand-border bg-brand-bg rounded-lg shadow-sm focus:ring-2 focus:ring-brand-accent-blue transition-all" />
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg className="h-5 w-5 text-brand-text-secondary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" /></svg>
-                                </div>
-                            </div>
+            <div className="bg-brand-card/50 border border-brand-border/50 rounded-xl p-4 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                    <div className="lg:col-span-2">
+                        <label className="block text-xs font-medium text-brand-text-secondary mb-1">Buscar Aspirante</label>
+                        <div className="relative"><input type="text" placeholder="Nombre, puesto..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full p-2 pl-8 border border-brand-border bg-brand-bg rounded-md" /><div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none"><svg className="h-4 w-4 text-brand-text-secondary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" /></svg></div></div>
+                    </div>
+                    <div className="lg:col-span-3 flex gap-2 items-end">
+                        <div className="flex-grow">
+                             <label className="block text-xs font-medium text-brand-text-secondary mb-1">Buscar en LinkedIn</label>
+                             <div className="relative"><input type="text" placeholder="Ej: React Developer en CDMX" value={linkedInSearchTerm} onChange={(e) => setLinkedInSearchTerm(e.target.value)} className="w-full p-2 pl-8 border border-brand-border bg-brand-bg rounded-md" /><div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none"><LinkedInIcon className="w-4 h-4 text-brand-text-secondary" /></div></div>
                         </div>
-                        
-                        {/* LinkedIn Search */}
-                        <div className="lg:col-span-2">
-                            <label htmlFor="search-linkedin" className="block text-xs font-medium text-brand-text-secondary mb-1">Buscar en LinkedIn</label>
-                            <div className="flex gap-2">
-                                <div className="relative flex-grow">
-                                    <input id="search-linkedin" type="text" placeholder="Ej: React Developer en CDMX" value={linkedInSearchTerm} onChange={(e) => setLinkedInSearchTerm(e.target.value)} className="w-full p-3 pl-10 border border-brand-border bg-brand-bg rounded-lg shadow-sm focus:ring-2 focus:ring-brand-accent-blue transition-all" />
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <LinkedInIcon className="w-5 h-5 text-brand-text-secondary" />
-                                    </div>
-                                </div>
-                                <button type="button" onClick={handleLinkedInSearch} className="px-4 py-2 bg-[#0A66C2] text-white font-semibold rounded-lg shadow-md hover:bg-[#004182] transition-colors flex-shrink-0 self-end">
-                                    Buscar
-                                </button>
-                            </div>
-                        </div>
-                        
-                        {/* Filters */}
-                        <div>
-                            <label htmlFor="filter-status" className="block text-xs font-medium text-brand-text-secondary mb-1">Estado</label>
-                            <select id="filter-status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as ApplicantStatus | 'all')} className="w-full p-3 border border-brand-border bg-brand-bg/50 rounded-lg shadow-sm focus:ring-2 focus:ring-brand-accent-blue transition-all">
-                                <option value="all">Todos los Estados</option>
-                                {statuses.map(s => <option key={s} value={s} className="bg-brand-bg">{s}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label htmlFor="filter-department" className="block text-xs font-medium text-brand-text-secondary mb-1">Departamento</label>
-                            <select id="filter-department" value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)} className="w-full p-3 border border-brand-border bg-brand-bg/50 rounded-lg shadow-sm focus:ring-2 focus:ring-brand-accent-blue transition-all">
-                                <option value="all">Todos los Departamentos</option>
-                                {departments.map(d => <option key={d.id} value={d.name} className="bg-brand-bg">{d.name}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label htmlFor="filter-date" className="block text-xs font-medium text-brand-text-secondary mb-1">Fecha de Postulación</label>
-                            <select id="filter-date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="w-full p-3 border border-brand-border bg-brand-bg/50 rounded-lg shadow-sm focus:ring-2 focus:ring-brand-accent-blue transition-all">
-                                {dateFilterOptions.map(opt => <option key={opt.value} value={opt.value} className="bg-brand-bg">{opt.label}</option>)}
-                            </select>
-                        </div>
+                        <button type="button" onClick={handleLinkedInSearch} className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700">Buscar</button>
+                    </div>
+                     <div>
+                        <label className="block text-xs font-medium text-brand-text-secondary mb-1">Estado</label>
+                        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} className="w-full p-2 border border-brand-border bg-brand-bg rounded-md"><option value="all">Todos los Estados</option>{statuses.map(s => <option key={s} value={s}>{s}</option>)}</select>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-brand-text-secondary mb-1">Departamento</label>
+                        <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)} className="w-full p-2 border border-brand-border bg-brand-bg rounded-md"><option value="all">Todos los Departamentos</option>{departmentNames.map(d => <option key={d} value={d}>{d}</option>)}</select>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-brand-text-secondary mb-1">Fecha de Postulación</label>
+                        <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="w-full p-2 border border-brand-border bg-brand-bg rounded-md">{dateFilterOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select>
+                    </div>
+                    <div className="lg:col-span-2 flex justify-end">
+                         <button onClick={handleOpenAddModal} className="px-4 py-2 bg-gradient-to-r from-brand-accent-blue to-brand-accent-purple text-white font-semibold rounded-lg shadow-md flex items-center gap-2"><PlusIcon className="w-5 h-5" /> Añadir Aspirante</button>
                     </div>
                 </div>
-
-                <div className="flex flex-col md:flex-row gap-4 items-center justify-end">
-                    <button onClick={handleOpenAddModal} className="px-4 py-3 bg-gradient-to-r from-brand-accent-blue to-brand-accent-purple text-white font-semibold rounded-lg shadow-md flex items-center justify-center gap-2 w-full md:w-auto flex-shrink-0">
-                        <PlusIcon className="w-5 h-5" /> Añadir Aspirante
-                    </button>
-                </div>
             </div>
 
-            <div className="bg-brand-card/20 rounded-xl border border-brand-border/50 p-1">
-                <div className="flex overflow-x-auto rounded-lg h-[75vh]">
-                    {statuses.map((status, idx) => {
-                        const style = statusStyles[status];
-                        const applicantsInStatus = filteredApplicants.filter(a => a.status === status);
-                        return (
-                            <div 
-                                key={status} 
-                                className={`w-72 flex-shrink-0 flex flex-col transition-colors duration-300 ${draggedOverColumn === status ? 'bg-white/5' : ''} ${idx > 0 ? 'border-l border-brand-border/50' : ''}`}
-                                onDragOver={handleDragOver}
-                                onDrop={(e) => handleDrop(e, status)}
-                                onDragEnter={() => handleDragEnter(status)}
-                                onDragLeave={() => setDraggedOverColumn(null)}
-                            >
-                                <div className="p-4 flex items-center gap-3">
-                                    <span className={`px-3 py-1 text-sm font-bold rounded-full ${style.bg} ${style.text}`}>
-                                        {style.name.toUpperCase()}
-                                    </span>
-                                    <span className="text-sm font-semibold text-brand-text-secondary">
-                                        {applicantsInStatus.length}
-                                    </span>
-                                </div>
-                                <div className="overflow-y-auto px-4 pb-4 flex-grow">
-                                  <div className="space-y-4">
-                                   {applicantsInStatus.map(applicant => (
-                                       <div 
-                                           key={applicant.id} 
-                                           className="bg-brand-card border border-brand-border rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all"
-                                           draggable="true"
-                                           onDragStart={(e) => handleDragStart(e, applicant.id)}
-                                           onDragEnd={handleDragEnd}
-                                        >
-                                           <div className="flex justify-between items-start">
-                                                <p className="font-bold text-brand-text-primary pr-2">{applicant.name}</p>
-                                              <button onClick={() => handleOpenEditModal(applicant)} className="text-brand-text-secondary hover:text-brand-accent-cyan p-1"><PencilIcon className="w-4 h-4" /></button>
-                                           </div>
-                                           <p className="text-sm text-brand-text-secondary truncate mt-1">{applicant.positionApplied}</p>
-                                           {applicant.department && (
-                                               <p className="text-xs font-semibold text-brand-accent-purple mt-1">{applicant.department}</p>
-                                           )}
-                                           <p className="text-xs text-brand-text-secondary/70 mt-1">{new Date(applicant.applicationDate + 'T00:00:00').toLocaleDateString()}</p>
-                                           <div className="mt-3 border-t border-brand-border/50 pt-2">
-                                              <button onClick={() => setSelectedApplicantForPanel(applicant)} className="w-full text-xs py-1.5 bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-semibold rounded">
-                                                Evaluar
-                                              </button>
-                                           </div>
-                                       </div>
-                                   ))}
-                                  </div>
-                                </div>
+            <div className="flex overflow-x-auto rounded-lg h-[70vh] bg-brand-card/30">
+                {statuses.map(status => {
+                    const style = statusStyles[status];
+                    const applicantsInStatus = filteredApplicants.filter(a => a.status === status);
+                    return (
+                        <div key={status} className={`w-72 flex-shrink-0 flex flex-col transition-colors duration-300 border-r border-brand-border/50 ${draggedOverColumn === status ? 'bg-white/5' : ''}`} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, status)} onDragEnter={() => handleDragEnter(status)} onDragLeave={() => setDraggedOverColumn(null)}>
+                            <div className="p-4 flex items-center gap-2">
+                                <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${style.pill}`}>{style.name}</span>
+                                <span className="text-sm font-semibold text-brand-text-secondary">{applicantsInStatus.length}</span>
                             </div>
-                        );
-                    })}
-                </div>
+                            <div className="overflow-y-auto px-4 pb-4 flex-grow space-y-3">
+                               {applicantsInStatus.map(applicant => (
+                                   <div key={applicant.id} className="bg-brand-card border border-brand-border rounded-lg p-3 cursor-grab" draggable onDragStart={(e) => handleDragStart(e, applicant.id)} onDragEnd={handleDragEnd}>
+                                       <div className="flex justify-between items-start"><p className="font-bold text-brand-text-primary pr-2">{applicant.name}</p><button onClick={() => handleOpenEditModal(applicant)} className="text-brand-text-secondary hover:text-brand-accent-cyan p-1"><PencilIcon className="w-4 h-4" /></button></div>
+                                       <p className="text-sm text-brand-text-secondary truncate mt-1">{applicant.positionApplied}</p>
+                                       {applicant.department && <p className="text-xs font-semibold text-brand-accent-purple mt-1">{applicant.department}</p>}
+                                       <p className="text-xs text-brand-text-secondary/70 mt-1">{new Date(applicant.applicationDate + 'T00:00:00').toLocaleDateString()}</p>
+                                       <div className="mt-3 border-t border-brand-border/50 pt-2"><button onClick={() => setSelectedApplicantForPanel(applicant)} className="w-full text-xs py-1.5 bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-semibold rounded">Evaluar</button></div>
+                                   </div>
+                               ))}
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
             
-            <ApplicantFormModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onSave={handleSave}
-                applicantToEdit={applicantToEdit}
-                departments={departments.map(d => d.name)}
-            />
-
-            {applicantToHire && (
-                <HireModal
-                    applicant={applicantToHire}
-                    departments={departments.map(d => d.name)}
-                    onClose={() => setApplicantToHire(null)}
-                    onConfirm={handleConfirmHire}
-                />
-            )}
-            
-            {selectedApplicantForPanel && (
-                <EvaluationPanelModal 
-                    applicant={selectedApplicantForPanel}
-                    evaluations={evaluations}
-                    templates={criteriaTemplates}
-                    onClose={() => setSelectedApplicantForPanel(null)}
-                    onStartEvaluation={(templateId) => {
-                        onEvaluate(selectedApplicantForPanel.id, 'applicant', templateId);
-                        setSelectedApplicantForPanel(null);
-                    }}
-                    onViewResult={(evaluationId) => {
-                        onViewEvaluationResult(evaluationId);
-                        setSelectedApplicantForPanel(null);
-                    }}
-                />
-            )}
-
+            <ApplicantFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} applicantToEdit={applicantToEdit} departments={departmentNames} />
+            {applicantToHire && <HireModal applicant={applicantToHire} departments={departmentNames} onClose={() => setApplicantToHire(null)} onConfirm={handleConfirmHire} />}
+            {selectedApplicantForPanel && <EvaluationPanelModal applicant={selectedApplicantForPanel} evaluations={evaluations} templates={criteriaTemplates} onClose={() => setSelectedApplicantForPanel(null)} onStartEvaluation={(templateId) => { onEvaluate(selectedApplicantForPanel.id, 'applicant', templateId); setSelectedApplicantForPanel(null); }} onViewResult={(evaluationId) => { onViewEvaluationResult(evaluationId); setSelectedApplicantForPanel(null); }} />}
         </div>
     );
 };

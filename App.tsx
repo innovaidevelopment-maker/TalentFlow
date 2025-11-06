@@ -106,16 +106,6 @@ const App: React.FC = () => {
     const [employeeFileToView, setEmployeeFileToView] = useState<string | null>(null);
     const [initialSubMenu, setInitialSubMenu] = useState<string | null>(null);
 
-    useEffect(() => {
-        // Al iniciar la aplicación, si hay un usuario logueado,
-        // siempre se redirige al menú principal para evitar
-        // iniciar en sub-menús de una sesión anterior.
-        if (currentUser) {
-            setCurrentView('main');
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // El array vacío asegura que se ejecute solo una vez al montar el componente.
-
     // --- State for Profile Comparison persistence ---
     const [comparisonSelection, setComparisonSelection] = useState<Set<string>>(new Set());
     const [comparisonSearchTerm, setComparisonSearchTerm] = useState('');

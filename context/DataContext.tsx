@@ -148,7 +148,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [levelThresholds, setLevelThresholds] = useLocalStorage<LevelThreshold[]>('levelThresholds', initialData.levelThresholds);
     const [evaluationTags] = useState<EvaluationTag[]>(initialData.evaluationTags);
     const [criteriaInEdit, setCriteriaInEdit] = useLocalStorage<Factor[]>('criteriaInEdit', []);
-    const [currentUser, setCurrentUser] = useLocalStorage<User | null>('currentUser', null);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
 
     // --- ACTIVITY LOGGING ---
     const logActivity = (action: string, details: string, targetId?: string, user?: User | null) => {
