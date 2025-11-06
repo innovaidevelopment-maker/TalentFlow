@@ -49,7 +49,7 @@ const HireModal: React.FC<{
                 </div>
                 <div className="flex justify-end gap-4 pt-6">
                     <button onClick={onClose} className="px-4 py-2 bg-slate-700 text-white font-semibold rounded-lg hover:bg-slate-600">Cancelar</button>
-                    <button onClick={handleConfirm} disabled={!department || !role || !employeeCode} className="px-4 py-2 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg disabled:opacity-50">Confirmar Contratación</button>
+                    <button onClick={handleConfirm} disabled={!department || !role || !employeeCode} className="px-4 py-2 bg-gradient-to-r from-brand-accent-blue to-brand-accent-purple text-white font-semibold rounded-lg disabled:opacity-50">Confirmar Contratación</button>
                 </div>
             </div>
         </div>
@@ -340,7 +340,7 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-4 items-center justify-end">
-                    <button onClick={handleOpenAddModal} className="px-4 py-3 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg shadow-md flex items-center justify-center gap-2 w-full md:w-auto flex-shrink-0">
+                    <button onClick={handleOpenAddModal} className="px-4 py-3 bg-gradient-to-r from-brand-accent-blue to-brand-accent-purple text-white font-semibold rounded-lg shadow-md flex items-center justify-center gap-2 w-full md:w-auto flex-shrink-0">
                         <PlusIcon className="w-5 h-5" /> Añadir Aspirante
                     </button>
                 </div>
@@ -382,7 +382,7 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
                                        )}
                                        <p className="text-xs text-brand-text-secondary/70 mt-1">{new Date(applicant.applicationDate + 'T00:00:00').toLocaleDateString()}</p>
                                        <div className="mt-3 border-t border-brand-border/50 pt-2">
-                                          <button onClick={() => setSelectedApplicantForPanel(applicant)} className="w-full text-xs py-1.5 bg-gradient-to-r from-brand-accent-cyan to-brand-accent-blue text-white font-semibold rounded">
+                                          <button onClick={() => setSelectedApplicantForPanel(applicant)} className="w-full text-xs py-1.5 bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-semibold rounded">
                                             Evaluar
                                           </button>
                                        </div>

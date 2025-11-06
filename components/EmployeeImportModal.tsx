@@ -169,7 +169,7 @@ export const EmployeeImportModal: React.FC<{
                             <input type="file" accept=".csv" onChange={handleFileChange} className="mt-4 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-accent-cyan/20 file:text-brand-accent-cyan hover:file:bg-brand-accent-cyan/30"/>
                         </div>
                         <div className="flex justify-end pt-4">
-                            <button onClick={handleProcessFile} disabled={!file || isProcessing} className="px-6 py-2 bg-gradient-to-r from-brand-accent-cyan to-brand-accent-blue text-white font-semibold rounded-lg disabled:opacity-50">
+                            <button onClick={handleProcessFile} disabled={!file || isProcessing} className="px-6 py-2 bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-semibold rounded-lg disabled:opacity-50">
                                 {isProcessing ? 'Procesando...' : 'Siguiente'}
                             </button>
                         </div>
@@ -210,7 +210,7 @@ export const EmployeeImportModal: React.FC<{
                         
                         <div className="flex justify-between items-center pt-4 mt-auto">
                             <button onClick={() => setStep(1)} className="px-6 py-2 bg-slate-700 rounded-lg">Volver</button>
-                            <button onClick={handleConfirmImport} disabled={parsedResult.validEmployees.length === 0} className="px-6 py-2 bg-gradient-to-r from-brand-accent-cyan to-brand-accent-blue text-white font-semibold rounded-lg disabled:opacity-50">Confirmar Importación</button>
+                            <button onClick={handleConfirmImport} disabled={parsedResult.validEmployees.length === 0} className="px-6 py-2 bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-semibold rounded-lg disabled:opacity-50">Confirmar Importación</button>
                         </div>
                     </div>
                 )}

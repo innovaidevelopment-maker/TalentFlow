@@ -110,7 +110,7 @@ const NewConversationModal: React.FC<{
                 )}
                 <div className="flex justify-end gap-4 pt-6">
                     <button onClick={onClose} className="px-4 py-2 bg-slate-700 text-white font-semibold rounded-lg hover:bg-slate-600">Cancelar</button>
-                    <button onClick={handleCreate} disabled={selectedUserIds.size === 0 || (isGroup && !groupName.trim())} className="px-4 py-2 bg-gradient-to-r from-brand-accent-cyan to-brand-accent-blue text-white font-semibold rounded-lg disabled:opacity-50">
+                    <button onClick={handleCreate} disabled={selectedUserIds.size === 0 || (isGroup && !groupName.trim())} className="px-4 py-2 bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-semibold rounded-lg disabled:opacity-50">
                         Crear Chat
                     </button>
                 </div>
@@ -363,7 +363,7 @@ const Chat: React.FC<ChatProps> = (props) => {
                         <div className="p-4 bg-brand-bg border-t border-brand-border">
                             <form onSubmit={handleSendMessageSubmit} className="flex gap-4">
                                 <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Escribe un mensaje..." className="flex-1 p-3 border border-brand-border bg-brand-card rounded-lg" />
-                                <button type="submit" aria-label="Enviar mensaje" className="p-3 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg">
+                                <button type="submit" aria-label="Enviar mensaje" className="p-3 bg-gradient-to-r from-brand-accent-blue to-brand-accent-purple text-white font-semibold rounded-lg">
                                     <PaperAirplaneIcon className="w-6 h-6"/>
                                 </button>
                             </form>

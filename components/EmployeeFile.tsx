@@ -100,7 +100,7 @@ const WeeklyScheduler: React.FC<{
                             </div>
                             <div className="flex justify-end gap-4 pt-4">
                                 <button type="button" onClick={() => setEditingDay(null)} className="px-4 py-2 bg-slate-700 text-white font-semibold rounded-lg hover:bg-slate-600">Cancelar</button>
-                                <button type="submit" className="px-4 py-2 bg-gradient-to-r from-brand-accent-cyan to-brand-accent-blue text-white font-semibold rounded-lg">Guardar Horario</button>
+                                <button type="submit" className="px-4 py-2 bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-semibold rounded-lg">Guardar Horario</button>
                             </div>
                         </form>
                     </div>
@@ -324,7 +324,7 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }
                          <InfoField label="Teléfono" value={employee.emergencyContactPhone} />
                          <h4 className="text-lg font-semibold text-brand-accent-cyan border-b border-brand-border pb-2 pt-4">Documentos</h4>
                          {employee.cvFile ? (
-                            <button onClick={handleDownloadCV} className="w-full py-2 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg">Descargar CV ({employee.cvFile.name})</button>
+                            <button onClick={handleDownloadCV} className="w-full py-2 bg-gradient-to-r from-brand-accent-blue to-brand-accent-purple text-white font-semibold rounded-lg">Descargar CV ({employee.cvFile.name})</button>
                          ) : (
                             <p className="text-brand-text-secondary">No hay CV adjunto.</p>
                          )}
@@ -390,7 +390,7 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }
                             <input type="file" onChange={handleImageUpload} accept="image/*" className="w-full mt-1 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-accent-cyan/20 file:text-brand-accent-cyan hover:file:bg-brand-accent-cyan/30" />
                         </div>
                         {newSickLeave.justificationImage && <img src={newSickLeave.justificationImage} alt="Justificante" className="max-h-32 rounded mt-2" />}
-                        <button type="submit" className="w-full py-2 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg">Añadir Reposo</button>
+                        <button type="submit" className="w-full py-2 bg-gradient-to-r from-brand-accent-blue to-brand-accent-purple text-white font-semibold rounded-lg">Añadir Reposo</button>
                     </form>
                     <div className="mt-6 space-y-2">
                          {employeeSickLeaves.map(leave => (
@@ -422,7 +422,7 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }
                                <input type="date" value={newBreak.endDate} onChange={e => setNewBreak(prev => ({...prev, endDate: e.target.value}))} className="w-full mt-1 p-2 bg-brand-bg border border-brand-border rounded" required />
                             </div>
                         </div>
-                        <button type="submit" className="w-full py-2 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg">Programar</button>
+                        <button type="submit" className="w-full py-2 bg-gradient-to-r from-brand-accent-blue to-brand-accent-purple text-white font-semibold rounded-lg">Programar</button>
                     </form>
                     <div className="mt-6 space-y-2">
                          {employeeBreaks.map(br => (
@@ -440,7 +440,7 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }
                  <form onSubmit={handleAddNoteSubmit} className="mb-6">
                     <textarea value={newNote} onChange={e => setNewNote(e.target.value)} rows={4} placeholder="Añadir una nueva nota..." className="w-full p-2 bg-brand-bg border border-brand-border rounded"></textarea>
                     <div className="text-right mt-2">
-                        <button type="submit" className="px-4 py-2 bg-gradient-to-r from-brand-accent-cyan to-brand-accent-blue text-white font-semibold rounded-lg">Guardar Nota</button>
+                        <button type="submit" className="px-4 py-2 bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-semibold rounded-lg">Guardar Nota</button>
                     </div>
                  </form>
                  <div className="space-y-4">

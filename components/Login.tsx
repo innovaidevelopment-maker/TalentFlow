@@ -67,7 +67,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, users, onNavigateToRegist
                         <div>
                             <button
                                 type="submit"
-                                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-white font-semibold bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo hover:shadow-lg hover:shadow-brand-accent-indigo/20 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-brand-bg focus:ring-brand-accent-indigo"
+                                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-white font-semibold bg-gradient-to-r from-brand-accent-blue to-brand-accent-purple hover:shadow-lg hover:shadow-brand-accent-purple/20 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-brand-bg focus:ring-brand-accent-purple"
                             >
                                 Ingresar
                             </button>

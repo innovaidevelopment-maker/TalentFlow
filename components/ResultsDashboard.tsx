@@ -141,7 +141,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, pers
                     <PolarGrid stroke="rgba(139, 148, 158, 0.4)" />
                     <PolarAngleAxis dataKey="subject" tick={{ fill: '#8B949E' }} />
                     <PolarRadiusAxis angle={30} domain={[0, 10]} tick={{ fill: '#8B949E' }}/>
-                    <Radar name={person.name} dataKey="score" stroke="#22d3ee" fill="#22d3ee" fillOpacity={0.6} />
+                    <Radar name={person.name} dataKey="score" stroke="#34D399" fill="#34D399" fillOpacity={0.6} />
                     <Tooltip contentStyle={{ backgroundColor: '#0D1117', border: '1px solid #8B949E' }} />
                     <Legend wrapperStyle={{ color: '#E6EDF3' }}/>
                   </RadarChart>
@@ -173,7 +173,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, pers
                  <YAxis domain={[0, 10]} tick={{ fill: '#8B949E' }} />
                  <Tooltip contentStyle={{ backgroundColor: '#0D1117', border: '1px solid #8B949E' }} />
                  <Legend wrapperStyle={{ color: '#E6EDF3' }} />
-                 <Line type="monotone" dataKey="score" name="Puntuación General" stroke="#8b5cf6" strokeWidth={2} activeDot={{ r: 8 }} dot={{ fill: '#8b5cf6' }} />
+                 <Line type="monotone" dataKey="score" name="Puntuación General" stroke="#34D399" strokeWidth={2} activeDot={{ r: 8 }} dot={{ fill: '#34D399' }} />
                </LineChart>
              </ResponsiveContainer>
            </div>

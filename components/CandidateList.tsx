@@ -112,7 +112,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onSelectE
                     </div>
                     <button
                       onClick={() => onSelectEmployee(employee.id, 'employee')}
-                      className="px-4 py-2 bg-gradient-to-r from-brand-accent-cyan to-brand-accent-blue text-white font-bold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-blue/20 transition-all"
+                      className="px-4 py-2 bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-bold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-cyan/20 transition-all"
                     >
                       Evaluar
                     </button>
@@ -144,7 +144,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onSelectE
                         </div>
                         <button
                           onClick={() => onSelectEmployee(employee.id, 'employee')}
-                          className="w-full mt-3 px-4 py-2 text-sm bg-gradient-to-r from-brand-accent-cyan to-brand-accent-blue text-white font-bold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-blue/20 transition-all"
+                          className="w-full mt-3 px-4 py-2 text-sm bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-bold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-cyan/20 transition-all"
                         >
                           Evaluar
                         </button>
@@ -168,7 +168,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onSelectE
                         </div>
                         <button
                           onClick={() => onSelectEmployee(employee.id, 'employee')}
-                          className="w-full mt-3 px-4 py-2 text-sm bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-bold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-indigo/20 transition-all"
+                          className="w-full mt-3 px-4 py-2 text-sm bg-gradient-to-r from-brand-accent-blue to-brand-accent-purple text-white font-bold rounded-lg shadow-md hover:shadow-lg hover:shadow-brand-accent-purple/20 transition-all"
                         >
                           Re-evaluar
                         </button>

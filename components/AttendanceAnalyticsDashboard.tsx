@@ -284,7 +284,7 @@ export const AttendanceAnalyticsDashboard: React.FC<AttendanceAnalyticsDashboard
                         <XAxis type="number" domain={[0, 100]} tick={{ fill: '#8B949E' }} />
                         <YAxis type="category" dataKey="name" width={100} tick={{ fill: '#8B949E' }} />
                         <Tooltip contentStyle={{ backgroundColor: '#0D1117', border: '1px solid #8B949E' }} formatter={(value) => `${Number(value).toFixed(1)}%`} />
-                        <Bar dataKey="Tasa de Asistencia" fill="#8b5cf6" />
+                        <Bar dataKey="Tasa de Asistencia" fill="#34D399" />
                     </BarChart>
                 </ResponsiveContainer>
             </div>

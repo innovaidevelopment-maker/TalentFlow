@@ -121,7 +121,7 @@ const TaskModal: React.FC<{
                 </form>
                 <div className="flex justify-end gap-4 p-6 border-t border-brand-border mt-auto">
                     <button type="button" onClick={onClose} className="px-4 py-2 bg-slate-700 rounded-lg">Cancelar</button>
-                    <button type="submit" form="task-form" className="px-4 py-2 bg-gradient-to-r from-brand-accent-cyan to-brand-accent-blue text-white font-semibold rounded-lg">Guardar Tarea</button>
+                    <button type="submit" form="task-form" className="px-4 py-2 bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-semibold rounded-lg">Guardar Tarea</button>
                 </div>
             </div>
         </div>
@@ -181,7 +181,7 @@ export const TasksDashboard: React.FC<TasksDashboardProps> = ({ currentUser }) =
             await updateTask(taskToEdit.id, taskData);
             await logActivity('UPDATE_TASK', `Se actualizó la tarea: ${taskToEdit.title}`, taskToEdit.id, currentUser);
         } else {
-            const addedTask = await addTask(taskData as Omit<Task, 'id' | 'createdAt' | 'creatorId'>);
+            const addedTask = await addTask(taskData as Omit<Task, 'id' | 'createdAt' | 'creatorId' | 'organizationId'>);
             if (addedTask) {
                await logActivity('CREATE_TASK', `Se creó la tarea: ${addedTask.title}`, addedTask.id, currentUser);
             }
@@ -316,7 +316,7 @@ export const TasksDashboard: React.FC<TasksDashboardProps> = ({ currentUser }) =
                             </svg>
                         </div>
                     </div>
-                    <button onClick={() => { setTaskToEdit(null); setIsModalOpen(true); }} className="px-4 py-2 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg shadow-md flex items-center justify-center gap-2">
+                    <button onClick={() => { setTaskToEdit(null); setIsModalOpen(true); }} className="px-4 py-2 bg-gradient-to-r from-brand-accent-blue to-brand-accent-purple text-white font-semibold rounded-lg shadow-md flex items-center justify-center gap-2">
                         <PlusIcon className="w-5 h-5" /> Nueva Tarea
                     </button>
                 </div>

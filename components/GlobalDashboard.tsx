@@ -241,7 +241,7 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ evaluations, e
                 <YAxis domain={[0, 10]} tick={{ fill: '#8B949E' }} />
                 <Tooltip contentStyle={{ backgroundColor: '#0D1117', border: '1px solid #8B949E' }} />
                 <Legend formatter={(value, entry) => <span style={{ color: '#E6EDF3' }}>{value}</span>} />
-                <Line type="monotone" dataKey="Puntuación Media" stroke="#8b5cf6" strokeWidth={2} />
+                <Line type="monotone" dataKey="Puntuación Media" stroke="#34D399" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -258,7 +258,7 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({ evaluations, e
               <Legend formatter={(value, entry) => <span style={{ color: '#E6EDF3' }}>{value}</span>} />
               <Bar dataKey="Puntuación Promedio" className="cursor-pointer">
                   {departmentChartData.map((entry) => (
-                      <Cell key={entry.name} fill={filter.type === 'department' && filter.value === entry.name ? '#22d3ee' : '#8b5cf6'} />
+                      <Cell key={entry.name} fill={filter.type === 'department' && filter.value === entry.name ? '#22d3ee' : '#34D399'} />
                   ))}
               </Bar>
             </BarChart>

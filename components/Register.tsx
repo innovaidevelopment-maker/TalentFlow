@@ -108,7 +108,7 @@ export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogi
                         <div>
                             <button
                                 type="submit"
-                                className="w-full flex justify-center mt-2 py-3 px-4 border border-transparent rounded-lg shadow-md text-white font-semibold bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo hover:shadow-lg hover:shadow-brand-accent-indigo/20 transition-all"
+                                className="w-full flex justify-center mt-2 py-3 px-4 border border-transparent rounded-lg shadow-md text-white font-semibold bg-gradient-to-r from-brand-accent-blue to-brand-accent-purple hover:shadow-lg hover:shadow-brand-accent-purple/20 transition-all"
                             >
                                 Registrar Empresa
                             </button>

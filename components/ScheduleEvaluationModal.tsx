@@ -190,7 +190,7 @@ export const ScheduleEvaluationModal: React.FC<ScheduleEvaluationModalProps> = (
         </form>
          <div className="flex justify-end gap-4 p-6 border-t border-brand-border mt-auto">
             <button type="button" onClick={onClose} className="px-4 py-2 bg-slate-700 text-white font-semibold rounded-lg hover:bg-slate-600">Cancelar</button>
-            <button type="submit" form="event-form" className="px-4 py-2 bg-gradient-to-r from-brand-accent-cyan to-brand-accent-blue text-white font-semibold rounded-lg">{eventToEdit ? 'Guardar Cambios' : 'Guardar Evento'}</button>
+            <button type="submit" form="event-form" className="px-4 py-2 bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-semibold rounded-lg">{eventToEdit ? 'Guardar Cambios' : 'Guardar Evento'}</button>
         </div>
       </div>
     </div>
