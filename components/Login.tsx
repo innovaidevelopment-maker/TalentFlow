@@ -9,7 +9,7 @@ interface LoginProps {
 
 export const Login: React.FC<LoginProps> = ({ onLogin, users, onNavigateToRegister }) => {
     const [email, setEmail] = useState('admin@talentflow.app'); // Pre-fill for convenience
-    const [password, setPassword] = useState('');
+    const [password, setPassword] = useState('admin'); // Pre-fill for convenience
     const [error, setError] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {

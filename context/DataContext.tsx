@@ -501,12 +501,10 @@ export const useData = () => {
     const { currentUser } = context;
 
     const organizationData = useMemo(() => {
-        if (!currentUser) return {
-            users: [], employees: [], applicants: [], criteriaTemplates: [], evaluations: [],
-            departments: [], scheduledEvaluations: [], chatThreads: [], tasks: [],
-            attendanceRecords: [], scheduledBreaks: [], sickLeaves: [], employeeNotes: [], workSchedules: [],
-            activityLog: []
-        };
+        if (!currentUser) {
+            return {}; // Return empty object when not logged in, so context provides full data lists
+        }
+        
         const orgId = currentUser.organizationId;
         return {
             users: context.users.filter(u => u.organizationId === orgId),

@@ -11,7 +11,7 @@ const organizations: Organization[] = [
 ];
 
 const users: User[] = [
-  { id: 'user-1', name: 'Admin', email: 'admin@talentflow.app', role: 'Admin', password: '', enabledTools: allTools, organizationId: 'org-1' },
+  { id: 'user-1', name: 'Admin', email: 'admin@talentflow.app', role: 'Admin', password: 'admin', enabledTools: allTools, organizationId: 'org-1' },
   { id: 'user-2', name: 'Elena Ríos', email: 'elena@talentflow.app', role: 'Usuario', password: '123', department: 'Tecnología', enabledTools: ['tasks', 'chat', 'calendar'], organizationId: 'org-1' },
   { id: 'user-3', name: 'Carlos Vega', email: 'carlos@talentflow.app', role: 'Usuario', password: '123', department: 'Ventas', enabledTools: ['tasks', 'chat', 'calendar', 'recruitment'], organizationId: 'org-1' }
 ];
