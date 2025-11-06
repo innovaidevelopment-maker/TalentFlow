@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 // @ts-ignore
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { Employee, AttendanceRecord, WorkSchedule } from '../types';
-import { ChartBarIcon, ArrowDownTrayIcon } from './icons';
+import { ChartBarIcon, ArrowDownTrayIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
 
 interface AttendanceAnalyticsDashboardProps {
   employees: Employee[];
@@ -54,6 +54,13 @@ export const AttendanceAnalyticsDashboard: React.FC<AttendanceAnalyticsDashboard
   });
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [employeeFilter, setEmployeeFilter] = useState('all');
+  const [departmentChartMetric, setDepartmentChartMetric] = useState('Tasa de Asistencia');
+
+  const departmentChartMetrics: Record<string, { unit: string; domain: [number, number | 'dataMax'] }> = {
+    'Tasa de Asistencia': { unit: '%', domain: [0, 100] },
+    'Total de Ausencias': { unit: ' días', domain: [0, 'dataMax'] },
+    'Promedio de Horas': { unit: ' hrs', domain: [0, 'dataMax'] }
+  };
 
   const handleDateRangePreset = (days: number) => {
     const end = new Date();
@@ -87,6 +94,22 @@ export const AttendanceAnalyticsDashboard: React.FC<AttendanceAnalyticsDashboard
     }
     return result;
   }, [employees, departmentFilter, employeeFilter]);
+
+  const handleCycleEmployee = (direction: 'next' | 'prev') => {
+      const currentIndex = employeesForFilter.findIndex(e => e.id === employeeFilter);
+      if (currentIndex === -1) return; // Should not happen if an employee is selected
+
+      let nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+
+      if (nextIndex >= employeesForFilter.length) {
+          nextIndex = 0; // Wrap around to the start
+      }
+      if (nextIndex < 0) {
+          nextIndex = employeesForFilter.length - 1; // Wrap around to the end
+      }
+      
+      setEmployeeFilter(employeesForFilter[nextIndex].id);
+  };
 
   const employeeStats = useMemo(() => {
     const stats: Record<string, { presentDays: number; absentDays: number; lateDays: number; workedHours: number; }> = {};
@@ -178,10 +201,25 @@ export const AttendanceAnalyticsDashboard: React.FC<AttendanceAnalyticsDashboard
       return departments.map(dept => {
           const deptCands = employees.filter(c => c.department === dept);
           const deptStats = deptCands.map(c => employeeStats[c.id]).filter(Boolean);
+          
+          // Tasa de Asistencia
           const totalScheduled = deptStats.reduce((acc, s) => acc + s.presentDays + s.absentDays, 0);
           const totalPresent = deptStats.reduce((acc, s) => acc + s.presentDays, 0);
           const attendanceRate = totalScheduled > 0 ? (totalPresent / totalScheduled) * 100 : 0;
-          return { name: dept, 'Tasa de Asistencia': attendanceRate };
+          
+          // Total de Ausencias
+          const totalAbsences = deptStats.reduce((acc, s) => acc + s.absentDays, 0);
+
+          // Promedio de Horas
+          const totalWorkedHours = deptStats.reduce((acc, s) => acc + s.workedHours, 0);
+          const avgWorkedHours = deptStats.length > 0 ? totalWorkedHours / deptStats.length : 0;
+
+          return { 
+              name: dept, 
+              'Tasa de Asistencia': attendanceRate,
+              'Total de Ausencias': totalAbsences,
+              'Promedio de Horas': avgWorkedHours,
+          };
       });
   }, [departments, employees, employeeStats]);
 
@@ -232,6 +270,16 @@ export const AttendanceAnalyticsDashboard: React.FC<AttendanceAnalyticsDashboard
 
       <div className="bg-brand-card border border-brand-border rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2 flex-wrap">
+            {employeeFilter !== 'all' && (
+                <div className="flex items-center gap-1">
+                    <button onClick={() => handleCycleEmployee('prev')} className="p-2 bg-brand-accent-blue/20 text-brand-accent-cyan rounded-md hover:bg-brand-accent-blue/30 transition-colors" title="Empleado anterior">
+                        <ChevronLeftIcon className="w-5 h-5"/>
+                    </button>
+                    <button onClick={() => handleCycleEmployee('next')} className="p-2 bg-brand-accent-blue/20 text-brand-accent-cyan rounded-md hover:bg-brand-accent-blue/30 transition-colors" title="Siguiente empleado">
+                        <ChevronRightIcon className="w-5 h-5"/>
+                    </button>
+                </div>
+            )}
             <label className="text-sm font-medium">Rango:</label>
             <input type="date" value={dateRange.start} onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))} className="p-2 border border-brand-border bg-brand-bg rounded-md text-sm text-brand-text-secondary" />
             <span>-</span>
@@ -282,20 +330,36 @@ export const AttendanceAnalyticsDashboard: React.FC<AttendanceAnalyticsDashboard
           </div>
           {employeeFilter === 'all' && (
             <div className="bg-brand-card border border-brand-border rounded-xl p-6">
-                <h3 className="text-xl font-bold mb-4">Comparativa por Departamento</h3>
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-bold">Comparativa por Departamento</h3>
+                    <select 
+                        value={departmentChartMetric} 
+                        onChange={e => setDepartmentChartMetric(e.target.value)}
+                        className="p-2 border border-brand-border bg-brand-bg rounded-md text-sm"
+                    >
+                        {Object.keys(departmentChartMetrics).map(metric => (
+                            <option key={metric} value={metric}>{metric}</option>
+                        ))}
+                    </select>
+                </div>
                 <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={departmentComparisonData} layout="vertical">
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(139, 148, 158, 0.2)" />
-                        <XAxis type="number" domain={[0, 100]} tick={{ fill: '#8B949E' }} />
+                        <XAxis 
+                            type="number" 
+                            domain={departmentChartMetrics[departmentChartMetric].domain as [number, number | 'dataMax']} 
+                            tick={{ fill: '#8B949E' }} 
+                            tickFormatter={(value) => departmentChartMetric === 'Tasa de Asistencia' ? `${value}%` : value}
+                        />
                         <YAxis type="category" dataKey="name" width={100} tick={{ fill: '#8B949E' }} />
                         <Tooltip 
                           contentStyle={{ backgroundColor: '#1C2127', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem' }} 
                           labelStyle={{ color: '#F0F6FC', fontWeight: 'bold' }} 
                           itemStyle={{ color: '#8A94A3' }} 
                           cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }} 
-                          formatter={(value: number) => `${value.toFixed(1)}%`}
+                          formatter={(value: number) => `${value.toFixed(1)}${departmentChartMetrics[departmentChartMetric].unit}`}
                         />
-                        <Bar dataKey="Tasa de Asistencia" fill="#34D399" />
+                        <Bar dataKey={departmentChartMetric} fill="#34D399" />
                     </BarChart>
                 </ResponsiveContainer>
             </div>

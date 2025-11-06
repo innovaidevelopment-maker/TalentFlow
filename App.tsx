@@ -436,7 +436,7 @@ const App: React.FC = () => {
             setTypeFilter={setComparisonTypeFilter}
         />; break;
         case 'criteria': viewContent = <CriteriaSetup criteria={criteriaInEdit} setCriteria={setCriteriaInEdit} templates={organizationData.criteriaTemplates} currentUser={currentUser} onSelectTemplate={handleSelectTemplate} onSaveNewTemplate={handleSaveNewTemplate} onDeleteTemplate={handleDeleteTemplate} onRenameTemplate={handleRenameTemplate} onUpdateTemplate={handleUpdateTemplate} />; break;
-        case 'history': viewContent = <EvaluationHistory evaluations={organizationData.evaluations} employees={organizationData.employees} applicants={organizationData.applicants} onViewDetails={setEvaluationToView} />; break;
+        case 'history': viewContent = <EvaluationHistory evaluations={organizationData.evaluations} employees={organizationData.employees} applicants={organizationData.applicants} onViewDetails={setEvaluationToView} departments={organizationDepartmentNames} />; break;
         case 'dashboard': viewContent = <GlobalDashboard evaluations={organizationData.evaluations} employees={organizationData.employees} scheduledEvals={organizationData.scheduledEvaluations} currentUser={currentUser} users={organizationData.users} />; break;
         case 'promotions': viewContent = <PromotionsDashboard evaluations={organizationData.evaluations} employees={organizationData.employees} departments={organizationDepartmentNames} />; break;
         case 'talentMatrix': viewContent = <TalentMatrix evaluations={organizationData.evaluations} employees={organizationData.employees} departments={organizationDepartmentNames} />; break;
