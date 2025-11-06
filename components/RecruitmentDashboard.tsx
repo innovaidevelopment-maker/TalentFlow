@@ -153,6 +153,14 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
 
     const statuses: ApplicantStatus[] = ['Nuevo', 'En Proceso', 'Oferta', 'Contratado', 'Rechazado'];
     
+    const statusStyles: Record<ApplicantStatus, { tagBg: string; tagText: string; }> = {
+        'Nuevo': { tagBg: 'bg-slate-500/20', tagText: 'text-slate-300' },
+        'En Proceso': { tagBg: 'bg-cyan-400/20', tagText: 'text-cyan-300' },
+        'Oferta': { tagBg: 'bg-yellow-400/20', tagText: 'text-yellow-300' },
+        'Contratado': { tagBg: 'bg-green-400/20', tagText: 'text-green-300' },
+        'Rechazado': { tagBg: 'bg-red-400/20', tagText: 'text-red-300' },
+    };
+
     const dateFilterOptions = [
         { value: 'all', label: 'Cualquier fecha' },
         { value: 'today', label: 'Hoy' },
@@ -346,25 +354,30 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
                 </div>
             </div>
 
-            <div className="flex space-x-6 overflow-x-auto pb-4">
-                {statuses.map(status => (
-                    <div 
-                        key={status} 
-                        className={`bg-brand-card/50 border border-brand-border/50 rounded-xl flex flex-col w-72 flex-shrink-0 h-[75vh] transition-colors duration-300 ${draggedOverColumn === status ? 'bg-brand-accent-blue/20' : ''}`}
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e, status)}
-                        onDragEnter={() => handleDragEnter(status)}
-                        onDragLeave={() => setDraggedOverColumn(null)}
-                    >
-                        <h3 className="font-bold text-lg text-brand-text-primary p-4 border-b border-brand-border flex-shrink-0">
-                            {status}
-                            <span className="text-sm font-normal text-brand-text-secondary ml-2">
-                                ({filteredApplicants.filter(a => a.status === status).length})
-                            </span>
-                        </h3>
-                        <div className="overflow-y-auto p-4">
-                          <div className="space-y-4">
-                           {filteredApplicants.filter(a => a.status === status).map(applicant => (
+            <div className="flex overflow-x-auto rounded-lg border border-brand-border/50 bg-brand-card/20 h-[75vh]">
+                {statuses.map(status => {
+                    const style = statusStyles[status];
+                    const applicantsInStatus = filteredApplicants.filter(a => a.status === status);
+                    return (
+                        <div 
+                            key={status} 
+                            className={`w-72 flex-shrink-0 flex flex-col border-r border-brand-border/50 last:border-r-0 transition-colors duration-300 ${draggedOverColumn === status ? 'bg-white/5' : ''}`}
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => handleDrop(e, status)}
+                            onDragEnter={() => handleDragEnter(status)}
+                            onDragLeave={() => setDraggedOverColumn(null)}
+                        >
+                            <div className="p-3 border-b border-brand-border/50 flex-shrink-0 flex items-center gap-3">
+                                <span className={`px-3 py-1 text-xs font-bold rounded-full ${style.tagBg} ${style.tagText}`}>
+                                    {status.toUpperCase()}
+                                </span>
+                                <span className="text-sm font-semibold text-brand-text-secondary">
+                                    {applicantsInStatus.length}
+                                </span>
+                            </div>
+                            <div className="overflow-y-auto p-4 flex-grow">
+                              <div className="space-y-4">
+                               {applicantsInStatus.map(applicant => (
                                    <div 
                                        key={applicant.id} 
                                        className="bg-brand-card border border-brand-border rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all"
@@ -388,10 +401,11 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
                                        </div>
                                    </div>
                                ))}
-                          </div>
+                              </div>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
             
             <ApplicantFormModal
