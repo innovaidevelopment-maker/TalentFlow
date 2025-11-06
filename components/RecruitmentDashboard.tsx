@@ -346,23 +346,23 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            <div className="flex gap-6 overflow-x-auto pb-4 h-[70vh]">
                 {statuses.map(status => (
                     <div 
                         key={status} 
-                        className={`bg-brand-card/50 border border-brand-border/50 rounded-xl transition-colors duration-300 ${draggedOverColumn === status ? 'bg-brand-accent-blue/20' : ''}`}
+                        className={`flex-shrink-0 w-72 md:w-80 bg-brand-card/50 border border-brand-border/50 rounded-xl flex flex-col transition-colors duration-300 ${draggedOverColumn === status ? 'bg-brand-accent-blue/20' : ''}`}
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDrop(e, status)}
                         onDragEnter={() => handleDragEnter(status)}
                         onDragLeave={() => setDraggedOverColumn(null)}
                     >
-                        <h3 className="font-bold text-lg text-brand-text-primary p-4 border-b border-brand-border">
+                        <h3 className="font-bold text-lg text-brand-text-primary p-4 border-b border-brand-border flex-shrink-0">
                             {status}
                             <span className="text-sm font-normal text-brand-text-secondary ml-2">
                                 ({filteredApplicants.filter(a => a.status === status).length})
                             </span>
                         </h3>
-                        <div className="overflow-y-auto p-4 max-h-[65vh]">
+                        <div className="overflow-y-auto p-4">
                           <div className="space-y-4">
                            {filteredApplicants.filter(a => a.status === status).map(applicant => (
                                    <div 
