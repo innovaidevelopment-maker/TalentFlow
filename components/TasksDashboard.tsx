@@ -11,6 +11,13 @@ const priorityMap: Record<TaskPriority, { color: string, name: string }> = {
     'Alta': { color: 'bg-red-500/20 text-red-300 border-red-500/30', name: 'Alta' },
 };
 
+const statusStyles: Record<TaskStatus, { bg: string; text: string; name: string }> = {
+    'Pendiente': { bg: 'bg-red-500/10', text: 'text-red-400', name: 'Pendiente' },
+    'En Progreso': { bg: 'bg-yellow-500/10', text: 'text-yellow-400', name: 'En Progreso' },
+    'Completada': { bg: 'bg-green-500/10', text: 'text-green-400', name: 'Completada' },
+};
+
+
 const TaskModal: React.FC<{
     isOpen: boolean;
     onClose: () => void;
@@ -181,7 +188,7 @@ export const TasksDashboard: React.FC<TasksDashboardProps> = ({ currentUser }) =
             await updateTask(taskToEdit.id, taskData);
             await logActivity('UPDATE_TASK', `Se actualizó la tarea: ${taskToEdit.title}`, taskToEdit.id, currentUser);
         } else {
-            const addedTask = await addTask(taskData as Omit<Task, 'id' | 'createdAt' | 'creatorId' | 'organizationId'>);
+            const addedTask = await addTask(taskData as Omit<Task, 'id' | 'createdAt' | 'creatorId' | 'organizationId'>, currentUser);
             if (addedTask) {
                await logActivity('CREATE_TASK', `Se creó la tarea: ${addedTask.title}`, addedTask.id, currentUser);
             }
@@ -341,20 +348,31 @@ export const TasksDashboard: React.FC<TasksDashboardProps> = ({ currentUser }) =
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {statuses.map(status => (
-                    <div key={status} 
-                         className={`bg-brand-card/50 border border-brand-border/50 rounded-xl transition-colors duration-300 ${draggedOverColumn === status ? 'bg-brand-accent-blue/20' : ''}`}
-                         onDragOver={(e) => e.preventDefault()}
-                         onDrop={(e) => handleDrop(e, status)}
-                         onDragEnter={() => setDraggedOverColumn(status)}
-                         onDragLeave={() => setDraggedOverColumn(null)}
-                    >
-                         <h3 className="font-bold text-lg text-brand-text-primary p-4 border-b border-brand-border">{status}</h3>
-                         <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
-                            {filteredTasks.filter(t => t.status === status).map(task => <TaskCard key={task.id} task={task} />)}
-                         </div>
-                    </div>
-                ))}
+                {statuses.map(status => {
+                    const style = statusStyles[status];
+                    const tasksInStatus = filteredTasks.filter(t => t.status === status);
+                    return (
+                        <div key={status} 
+                             className={`bg-brand-card/50 border border-brand-border/50 rounded-xl transition-colors duration-300 ${draggedOverColumn === status ? 'bg-brand-accent-blue/20' : ''}`}
+                             onDragOver={(e) => e.preventDefault()}
+                             onDrop={(e) => handleDrop(e, status)}
+                             onDragEnter={() => setDraggedOverColumn(status)}
+                             onDragLeave={() => setDraggedOverColumn(null)}
+                        >
+                            <div className="p-4 border-b border-brand-border flex items-center gap-3">
+                                <span className={`px-3 py-1 text-sm font-bold rounded-full ${style.bg} ${style.text}`}>
+                                    {style.name.toUpperCase()}
+                                </span>
+                                <span className="text-sm font-semibold text-brand-text-secondary">
+                                    {tasksInStatus.length}
+                                </span>
+                            </div>
+                             <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                                {tasksInStatus.map(task => <TaskCard key={task.id} task={task} />)}
+                             </div>
+                        </div>
+                    );
+                })}
             </div>
 
         </div>

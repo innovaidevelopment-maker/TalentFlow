@@ -153,12 +153,12 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
 
     const statuses: ApplicantStatus[] = ['Nuevo', 'En Proceso', 'Oferta', 'Contratado', 'Rechazado'];
     
-    const statusStyles: Record<ApplicantStatus, { tagBg: string; tagText: string; }> = {
-        'Nuevo': { tagBg: 'bg-slate-500/20', tagText: 'text-slate-300' },
-        'En Proceso': { tagBg: 'bg-cyan-400/20', tagText: 'text-cyan-300' },
-        'Oferta': { tagBg: 'bg-yellow-400/20', tagText: 'text-yellow-300' },
-        'Contratado': { tagBg: 'bg-green-400/20', tagText: 'text-green-300' },
-        'Rechazado': { tagBg: 'bg-red-400/20', tagText: 'text-red-300' },
+    const statusStyles: Record<ApplicantStatus, { bg: string; text: string; name: string }> = {
+        'Nuevo': { bg: 'bg-blue-500/10', text: 'text-blue-400', name: 'Nuevo' },
+        'En Proceso': { bg: 'bg-cyan-500/10', text: 'text-cyan-400', name: 'En Proceso' },
+        'Oferta': { bg: 'bg-yellow-500/10', text: 'text-yellow-400', name: 'Oferta' },
+        'Contratado': { bg: 'bg-green-500/10', text: 'text-green-400', name: 'Contratado' },
+        'Rechazado': { bg: 'bg-red-500/10', text: 'text-red-400', name: 'Rechazado' },
     };
 
     const dateFilterOptions = [
@@ -354,58 +354,60 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
                 </div>
             </div>
 
-            <div className="flex overflow-x-auto rounded-lg border border-brand-border/50 bg-brand-card/20 h-[75vh]">
-                {statuses.map(status => {
-                    const style = statusStyles[status];
-                    const applicantsInStatus = filteredApplicants.filter(a => a.status === status);
-                    return (
-                        <div 
-                            key={status} 
-                            className={`w-72 flex-shrink-0 flex flex-col border-r border-brand-border/50 last:border-r-0 transition-colors duration-300 ${draggedOverColumn === status ? 'bg-white/5' : ''}`}
-                            onDragOver={handleDragOver}
-                            onDrop={(e) => handleDrop(e, status)}
-                            onDragEnter={() => handleDragEnter(status)}
-                            onDragLeave={() => setDraggedOverColumn(null)}
-                        >
-                            <div className="p-3 border-b border-brand-border/50 flex-shrink-0 flex items-center gap-3">
-                                <span className={`px-3 py-1 text-xs font-bold rounded-full ${style.tagBg} ${style.tagText}`}>
-                                    {status.toUpperCase()}
-                                </span>
-                                <span className="text-sm font-semibold text-brand-text-secondary">
-                                    {applicantsInStatus.length}
-                                </span>
-                            </div>
-                            <div className="overflow-y-auto p-4 flex-grow">
-                              <div className="space-y-4">
-                               {applicantsInStatus.map(applicant => (
-                                   <div 
-                                       key={applicant.id} 
-                                       className="bg-brand-card border border-brand-border rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all"
-                                       draggable="true"
-                                       onDragStart={(e) => handleDragStart(e, applicant.id)}
-                                       onDragEnd={handleDragEnd}
-                                    >
-                                       <div className="flex justify-between items-start">
-                                            <p className="font-bold text-brand-text-primary pr-2">{applicant.name}</p>
-                                          <button onClick={() => handleOpenEditModal(applicant)} className="text-brand-text-secondary hover:text-brand-accent-cyan p-1"><PencilIcon className="w-4 h-4" /></button>
+            <div className="bg-brand-card/20 rounded-xl border border-brand-border/50 p-1">
+                <div className="flex overflow-x-auto rounded-lg h-[75vh]">
+                    {statuses.map((status, idx) => {
+                        const style = statusStyles[status];
+                        const applicantsInStatus = filteredApplicants.filter(a => a.status === status);
+                        return (
+                            <div 
+                                key={status} 
+                                className={`w-72 flex-shrink-0 flex flex-col transition-colors duration-300 ${draggedOverColumn === status ? 'bg-white/5' : ''} ${idx > 0 ? 'border-l border-brand-border/50' : ''}`}
+                                onDragOver={handleDragOver}
+                                onDrop={(e) => handleDrop(e, status)}
+                                onDragEnter={() => handleDragEnter(status)}
+                                onDragLeave={() => setDraggedOverColumn(null)}
+                            >
+                                <div className="p-4 flex items-center gap-3">
+                                    <span className={`px-3 py-1 text-sm font-bold rounded-full ${style.bg} ${style.text}`}>
+                                        {style.name.toUpperCase()}
+                                    </span>
+                                    <span className="text-sm font-semibold text-brand-text-secondary">
+                                        {applicantsInStatus.length}
+                                    </span>
+                                </div>
+                                <div className="overflow-y-auto px-4 pb-4 flex-grow">
+                                  <div className="space-y-4">
+                                   {applicantsInStatus.map(applicant => (
+                                       <div 
+                                           key={applicant.id} 
+                                           className="bg-brand-card border border-brand-border rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all"
+                                           draggable="true"
+                                           onDragStart={(e) => handleDragStart(e, applicant.id)}
+                                           onDragEnd={handleDragEnd}
+                                        >
+                                           <div className="flex justify-between items-start">
+                                                <p className="font-bold text-brand-text-primary pr-2">{applicant.name}</p>
+                                              <button onClick={() => handleOpenEditModal(applicant)} className="text-brand-text-secondary hover:text-brand-accent-cyan p-1"><PencilIcon className="w-4 h-4" /></button>
+                                           </div>
+                                           <p className="text-sm text-brand-text-secondary truncate mt-1">{applicant.positionApplied}</p>
+                                           {applicant.department && (
+                                               <p className="text-xs font-semibold text-brand-accent-purple mt-1">{applicant.department}</p>
+                                           )}
+                                           <p className="text-xs text-brand-text-secondary/70 mt-1">{new Date(applicant.applicationDate + 'T00:00:00').toLocaleDateString()}</p>
+                                           <div className="mt-3 border-t border-brand-border/50 pt-2">
+                                              <button onClick={() => setSelectedApplicantForPanel(applicant)} className="w-full text-xs py-1.5 bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-semibold rounded">
+                                                Evaluar
+                                              </button>
+                                           </div>
                                        </div>
-                                       <p className="text-sm text-brand-text-secondary truncate mt-1">{applicant.positionApplied}</p>
-                                       {applicant.department && (
-                                           <p className="text-xs font-semibold text-brand-accent-purple mt-1">{applicant.department}</p>
-                                       )}
-                                       <p className="text-xs text-brand-text-secondary/70 mt-1">{new Date(applicant.applicationDate + 'T00:00:00').toLocaleDateString()}</p>
-                                       <div className="mt-3 border-t border-brand-border/50 pt-2">
-                                          <button onClick={() => setSelectedApplicantForPanel(applicant)} className="w-full text-xs py-1.5 bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-semibold rounded">
-                                            Evaluar
-                                          </button>
-                                       </div>
-                                   </div>
-                               ))}
-                              </div>
+                                   ))}
+                                  </div>
+                                </div>
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
             </div>
             
             <ApplicantFormModal
