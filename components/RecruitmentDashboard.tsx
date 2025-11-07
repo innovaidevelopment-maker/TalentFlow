@@ -222,17 +222,32 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
         e.currentTarget.style.opacity = '1';
         setDraggedOverColumn(null);
     };
-    
-    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>, status: ApplicantStatus) => {
+        if (status !== 'Nuevo') {
+            e.preventDefault();
+        }
+    };
     
     const handleDrop = (e: React.DragEvent<HTMLDivElement>, status: ApplicantStatus) => {
         e.preventDefault();
-        const applicantId = e.dataTransfer.getData('applicantId');
-        if (applicantId) handleChangeStatus(applicantId, status);
         setDraggedOverColumn(null);
+        if (status === 'Nuevo') {
+            return;
+        }
+        const applicantId = e.dataTransfer.getData('applicantId');
+        const applicant = applicants.find(a => a.id === applicantId);
+        if (applicantId && applicant && applicant.status !== 'Nuevo') {
+            handleChangeStatus(applicantId, status);
+        }
     };
     
-    const handleDragEnter = (status: ApplicantStatus) => setDraggedOverColumn(status);
+    const handleDragEnter = (status: ApplicantStatus) => {
+        if (status !== 'Nuevo') {
+            setDraggedOverColumn(status);
+        }
+    };
+
     const departmentNames = useMemo(() => departments.map(d => d.name), [departments]);
 
     return (
@@ -299,25 +314,34 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
                         const style = statusStyles[status];
                         const applicantsInStatus = filteredApplicants.filter(a => a.status === status);
                         return (
-                            <div key={status} className={`flex flex-col transition-colors duration-300 ${draggedOverColumn === status ? 'bg-white/5' : ''}`} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, status)} onDragEnter={() => handleDragEnter(status)} onDragLeave={() => setDraggedOverColumn(null)}>
+                            <div key={status} className={`flex flex-col transition-colors duration-300 ${draggedOverColumn === status ? 'bg-white/5' : ''}`} onDragOver={(e) => handleDragOver(e, status)} onDrop={(e) => handleDrop(e, status)} onDragEnter={() => handleDragEnter(status)} onDragLeave={() => setDraggedOverColumn(null)}>
                                 <div className="p-4 flex items-center gap-2 flex-shrink-0">
                                     <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${style.pill}`}>{style.name}</span>
                                     <span className="text-sm font-semibold text-brand-text-secondary">{applicantsInStatus.length}</span>
                                 </div>
                                 <div className="px-4 pb-4 space-y-3">
-                                {applicantsInStatus.map(applicant => (
-                                    <div key={applicant.id} className="bg-brand-card border border-brand-border rounded-lg p-3 cursor-grab" draggable onDragStart={(e) => handleDragStart(e, applicant.id)} onDragEnd={handleDragEnd}>
-                                        <div className="flex justify-between items-start"><p className="font-bold text-brand-text-primary pr-2">{applicant.name}</p><button onClick={() => handleOpenEditModal(applicant)} className="text-brand-text-secondary hover:text-brand-accent-cyan p-1"><PencilIcon className="w-4 h-4" /></button></div>
-                                        <p className="text-sm text-brand-text-secondary truncate mt-1">{applicant.positionApplied}</p>
-                                        {applicant.department && <p className="text-xs font-semibold text-brand-accent-purple mt-1">{applicant.department}</p>}
-                                        <p className="text-xs text-brand-text-secondary/70 mt-1">{new Date(applicant.applicationDate + 'T00:00:00').toLocaleDateString()}</p>
-                                        <div className="mt-3 border-t border-brand-border/50 pt-2">
-                                            <button onClick={() => onEvaluate(applicant.id)} className="w-full text-xs py-1.5 bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-semibold rounded">
-                                                Evaluar
-                                            </button>
+                                {applicantsInStatus.map(applicant => {
+                                    const isDraggable = applicant.status !== 'Nuevo';
+                                    return (
+                                        <div 
+                                            key={applicant.id} 
+                                            className={`bg-brand-card border border-brand-border rounded-lg p-3 ${isDraggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`} 
+                                            draggable={isDraggable} 
+                                            onDragStart={isDraggable ? (e) => handleDragStart(e, applicant.id) : undefined} 
+                                            onDragEnd={isDraggable ? handleDragEnd : undefined}
+                                        >
+                                            <div className="flex justify-between items-start"><p className="font-bold text-brand-text-primary pr-2">{applicant.name}</p><button onClick={() => handleOpenEditModal(applicant)} className="text-brand-text-secondary hover:text-brand-accent-cyan p-1"><PencilIcon className="w-4 h-4" /></button></div>
+                                            <p className="text-sm text-brand-text-secondary truncate mt-1">{applicant.positionApplied}</p>
+                                            {applicant.department && <p className="text-xs font-semibold text-brand-accent-purple mt-1">{applicant.department}</p>}
+                                            <p className="text-xs text-brand-text-secondary/70 mt-1">{new Date(applicant.applicationDate + 'T00:00:00').toLocaleDateString()}</p>
+                                            <div className="mt-3 border-t border-brand-border/50 pt-2">
+                                                <button onClick={() => onEvaluate(applicant.id)} className="w-full text-xs py-1.5 bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-semibold rounded">
+                                                    {applicant.status === 'Nuevo' ? 'Evaluar' : 'Re-evaluar'}
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    )
+                                })}
                                 </div>
                             </div>
                         );

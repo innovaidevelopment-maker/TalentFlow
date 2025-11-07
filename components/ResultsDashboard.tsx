@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 // @ts-ignore
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip, LineChart, CartesianGrid, XAxis, YAxis, Line } from 'recharts';
 import type { Employee, Applicant, EvaluationResult } from '../types';
 import { SparklesIcon, ArrowLeftIcon, ArrowDownTrayIcon, DocumentChartBarIcon } from './icons';
 import { generateEvaluationPDF } from '../services/pdfService';
+import { useData } from '../context/DataContext';
 
 interface ResultsDashboardProps {
   result: EvaluationResult;
@@ -14,6 +15,7 @@ interface ResultsDashboardProps {
 
 export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, person, allEvaluations, onBack }) => {
   const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const { levelThresholds } = useData();
 
   const handleDownloadPdf = async () => {
     setIsPdfLoading(true);
@@ -56,6 +58,16 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, pers
           default: return 'bg-slate-700 text-slate-300';
       }
   }
+
+  const scoreRangesLegend = useMemo(() => {
+    const sortedThresholds = [...levelThresholds].sort((a, b) => a.threshold - b.threshold);
+    const ranges = sortedThresholds.map((level, index) => {
+      const lowerBound = index === 0 ? 0 : sortedThresholds[index - 1].threshold + 0.1;
+      const upperBound = level.threshold;
+      return `${level.name}: ${lowerBound.toFixed(1)} - ${upperBound.toFixed(1)}`;
+    });
+    return ranges.join(' | ');
+  }, [levelThresholds]);
 
   // Un renderizador simple de markdown a HTML para el feedback de la IA.
   const renderMarkdown = (text: string) => {
@@ -109,6 +121,9 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, pers
                     Rigor: {result.mode}
                 </span>
               </div>
+             <p className="text-xs text-brand-text-secondary/70 mt-2 italic pdf-hide">
+              Rangos de Nivel: {scoreRangesLegend}
+             </p>
             <p className="text-sm text-brand-text-secondary/80 mt-2">Evaluado el: {new Date(result.evaluatedAt).toLocaleString()}</p>
          </header>
 

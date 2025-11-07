@@ -17,6 +17,8 @@ export const generateFeedback = async (
     const isEmployee = 'employeeCode' in person;
     const position = isEmployee ? (person as Employee).role : (person as Applicant).positionApplied;
 
+    const systemInstruction = `Actúa como un experto en Recursos Humanos y un director de contratación experimentado. Tu tarea es escribir una retroalimentación de evaluación.`;
+
     let promptBody = `Evalúa a ${isEmployee ? 'la persona empleada' : 'la persona aspirante'} llamada **${person.name}** para el puesto de **${position}**.\n`;
     promptBody += `Se realizó esta evaluación bajo un nivel de rigor: **${mode}**.\n`;
     promptBody += `IMPORTANTE: El nivel de rigor es el contexto clave para tu análisis. Un rigor 'Bajo' significa que las expectativas eran menores, por lo que una puntuación alta (ej. 9 o 10) es excepcionalmente buena y debe ser destacada como tal. Un rigor 'Riguroso' significa que se aplicaron los estándares más altos, por lo que las puntuaciones deben interpretarse estrictamente. Ajusta el tono y las conclusiones de tu retroalimentación en función de este nivel de rigor.\n\n`;
@@ -34,12 +36,13 @@ export const generateFeedback = async (
     });
 
     promptBody += `Basado en esta evaluación, por favor proporciona una retroalimentación detallada y constructiva. La respuesta debe ser profesional y útil para la toma de decisiones. Estructura la respuesta en formato Markdown con los siguientes encabezados: ### Resumen General, ### Fortalezas Clave, y ### Áreas de Mejora. Sé específico en tus recomendaciones.`;
-
-    const fullPrompt = `Actúa como un experto en Recursos Humanos y un director de contratación experimentado. Tu tarea es escribir una retroalimentación de evaluación. ${promptBody}`;
     
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: fullPrompt,
+      contents: promptBody,
+      config: {
+        systemInstruction: systemInstruction,
+      }
     });
 
     return response.text;

@@ -243,6 +243,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         setEvaluations(prev => [...prev, newEvaluation]);
         logActivity('COMPLETE_EVALUATION', `Se completó una evaluación para ${person.name} (${personToEvaluate.type}).`, newEvaluation.id, user);
+        
+        // Automatically move applicant from 'Nuevo' to 'En Proceso' after evaluation
+        if (personToEvaluate.type === 'applicant') {
+            const applicant = applicants.find(a => a.id === personToEvaluate.id);
+            if (applicant && applicant.status === 'Nuevo') {
+                setApplicants(prev => prev.map(app => 
+                    app.id === personToEvaluate.id ? { ...app, status: 'En Proceso' } : app
+                ));
+                 logActivity('UPDATE_APPLICANT_STATUS', `Estado de ${applicant.name} cambiado a 'En Proceso' automáticamente tras evaluación.`, applicant.id, user);
+            }
+        }
+
         return newEvaluation.id;
     };
     
