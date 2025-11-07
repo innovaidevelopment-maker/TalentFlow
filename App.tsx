@@ -29,6 +29,7 @@ import { ArrowLeftIcon } from './components/icons';
 import { ProfileComparisonList } from './components/ProfileComparisonList';
 import { ActivityLogDashboard } from './components/ActivityLogDashboard';
 import { FlightRiskDashboard } from './components/FlightRiskDashboard';
+import { GlobalHistory } from './components/GlobalHistory';
 
 
 // A simple useLocalStorage hook to persist session state
@@ -57,7 +58,7 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<Re
 }
 
 const ALL_TOOLS = [
-    'recruitment', 'employees', 'attendance', 'attendanceAnalytics',
+    'recruitment', 'employees', 'attendance', 'attendanceAnalytics', 'globalHistory',
     'dashboard', 'evaluateEmployees', 'criteria', 'history', 'promotions', 'talentMatrix', 'flightRisk',
     'calendar', 'chat', 'tasks', 'compare', 'activityLog'
 ];
@@ -67,6 +68,7 @@ const subViewParentMap: { [key: string]: string } = {
     'employees': 'personal',
     'attendance': 'personal',
     'attendanceAnalytics': 'personal',
+    'globalHistory': 'personal',
     'dashboard': 'evaluaciones',
     'evaluateEmployees': 'evaluaciones',
     'compare': 'evaluaciones',
@@ -437,6 +439,7 @@ const App: React.FC = () => {
         />; break;
         case 'criteria': viewContent = <CriteriaSetup criteria={criteriaInEdit} setCriteria={setCriteriaInEdit} templates={organizationData.criteriaTemplates} currentUser={currentUser} onSelectTemplate={handleSelectTemplate} onSaveNewTemplate={handleSaveNewTemplate} onDeleteTemplate={handleDeleteTemplate} onRenameTemplate={handleRenameTemplate} onUpdateTemplate={handleUpdateTemplate} />; break;
         case 'history': viewContent = <EvaluationHistory evaluations={organizationData.evaluations} employees={organizationData.employees} applicants={organizationData.applicants} onViewDetails={setEvaluationToView} departments={organizationDepartmentNames} />; break;
+        case 'globalHistory': viewContent = <GlobalHistory onViewEvaluationResult={setEvaluationToView} onViewEmployeeFile={(id) => {setCurrentView('employeeFile'); setEmployeeFileToView(id);}} />; break;
         case 'dashboard': viewContent = <GlobalDashboard evaluations={organizationData.evaluations} employees={organizationData.employees} scheduledEvals={organizationData.scheduledEvaluations} currentUser={currentUser} users={organizationData.users} />; break;
         case 'promotions': viewContent = <PromotionsDashboard evaluations={organizationData.evaluations} employees={organizationData.employees} departments={organizationDepartmentNames} />; break;
         case 'talentMatrix': viewContent = <TalentMatrix evaluations={organizationData.evaluations} employees={organizationData.employees} departments={organizationDepartmentNames} />; break;

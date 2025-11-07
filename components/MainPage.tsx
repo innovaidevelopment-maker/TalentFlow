@@ -15,7 +15,8 @@ import {
     Squares2X2Icon,
     ArrowTrendingUpIcon,
     ClipboardDocumentListIcon,
-    ChartPieIcon
+    ChartPieIcon,
+    ListBulletIcon
 } from './icons';
 import type { User } from '../types';
 
@@ -30,7 +31,8 @@ interface MainPageProps {
 const personalSubItems = [
     { view: 'employees', label: 'Empleados', icon: UserGroupIcon, description: 'Gestiona la información del personal.', requiredTools: ['employees'] },
     { view: 'attendance', label: 'Asistencia Diaria', icon: ClockIcon, description: 'Controla y registra la asistencia diaria.', requiredTools: ['attendance'] },
-    { view: 'attendanceAnalytics', label: 'Análisis de Asistencia', icon: ChartBarIcon, description: 'Visualiza métricas y tendencias.', requiredTools: ['attendanceAnalytics'] }
+    { view: 'attendanceAnalytics', label: 'Análisis de Asistencia', icon: ChartBarIcon, description: 'Visualiza métricas y tendencias.', requiredTools: ['attendanceAnalytics'] },
+    { view: 'globalHistory', label: 'Historial Global', icon: ListBulletIcon, description: 'Consulta una línea de tiempo unificada de todos los eventos.', requiredTools: ['employees', 'attendance', 'tasks'] },
 ];
 
 const evaluacionesSubItems = [
@@ -61,7 +63,7 @@ const mainNavItems = [
         label: 'Gestión de Personal',
         icon: UserGroupIcon,
         description: 'Administra la información, asistencia y horarios de tu equipo.',
-        requiredTools: ['employees', 'attendance', 'attendanceAnalytics'],
+        requiredTools: ['employees', 'attendance', 'attendanceAnalytics', 'globalHistory'],
         isSubMenu: true
     },
     {
