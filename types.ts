@@ -30,6 +30,10 @@ export interface Employee extends Person {
   emergencyContactName?: string;
   emergencyContactPhone?: string;
   organizationId: string;
+  recurringSchedule?: {
+    templateId: string;
+    days: number[]; // 1 for Monday, 2 for Tuesday, ..., 7 for Sunday
+  };
 }
 
 export type ApplicantStatus = 'Nuevo' | 'En Proceso' | 'Oferta' | 'Contratado' | 'Rechazado';

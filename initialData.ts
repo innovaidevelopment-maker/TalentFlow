@@ -545,6 +545,7 @@ const shiftTemplates: ShiftTemplate[] = [
     { id: 'st-2', organizationId: 'org-1', name: 'Jornada Completa (9h)', startTime: '09:00', endTime: '18:00', color: 'bg-blue-500/20' },
     { id: 'st-3', organizationId: 'org-1', name: 'Turno de Tarde (6h)', startTime: '14:00', endTime: '20:00', color: 'bg-amber-500/20' },
     { id: 'st-4', organizationId: 'org-1', name: 'Turno Nocturno (12h)', startTime: '20:00', endTime: '08:00', color: 'bg-indigo-500/20' },
+    { id: 'st-5', organizationId: 'org-1', name: 'Día Libre', startTime: '00:00', endTime: '00:00', color: 'bg-slate-700/50' },
 ]
 
 const activityLog: ActivityLogEntry[] = [];

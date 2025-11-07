@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { Employee, AttendanceRecord, ScheduledBreak, SickLeave, EmployeeNote, User, WorkSchedule, ShiftTemplate } from '../types';
 import { useData } from '../context/DataContext';
 import { ArrowLeftIcon, PlusIcon, PencilIcon, TrashIcon, ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from './icons';
@@ -18,28 +18,111 @@ const fileToBase64 = (file: File): Promise<string> => {
     });
 };
 
+const RecurringScheduleSetter: React.FC<{
+    employee: Employee;
+    onSave: (updates: Partial<Employee>) => void;
+}> = ({ employee, onSave }) => {
+    const { shiftTemplates } = useData();
+    const [selectedTemplateId, setSelectedTemplateId] = useState(employee.recurringSchedule?.templateId || '');
+    const [selectedDays, setSelectedDays] = useState<Set<number>>(new Set(employee.recurringSchedule?.days || []));
+
+    const weekDays = [ { name: 'L', value: 1 }, { name: 'M', value: 2 }, { name: 'M', value: 3 }, { name: 'J', value: 4 }, { name: 'V', value: 5 }, { name: 'S', value: 6 }, { name: 'D', value: 7 }];
+
+    const handleDayToggle = (day: number) => {
+        setSelectedDays(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(day)) newSet.delete(day);
+            else newSet.add(day);
+            return newSet;
+        });
+    };
+
+    const handleSave = () => {
+        if (selectedTemplateId && selectedDays.size > 0) {
+            onSave({ recurringSchedule: { templateId: selectedTemplateId, days: Array.from(selectedDays) } });
+        }
+    };
+    
+    const handleClear = () => {
+        onSave({ recurringSchedule: undefined });
+        setSelectedTemplateId('');
+        setSelectedDays(new Set());
+    };
+
+    return (
+        <div className="space-y-3">
+             <select value={selectedTemplateId} onChange={e => setSelectedTemplateId(e.target.value)} className="w-full p-2 bg-brand-bg border border-brand-border rounded-md text-sm">
+                <option value="">Seleccionar plantilla base...</option>
+                {shiftTemplates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+            <div className="flex justify-center gap-2">
+                {weekDays.map(day => (
+                    <button 
+                        key={day.value} 
+                        onClick={() => handleDayToggle(day.value)}
+                        className={`w-8 h-8 text-sm rounded-full font-bold transition-colors ${selectedDays.has(day.value) ? 'bg-slate-600 text-white' : 'bg-slate-800 text-brand-text-secondary hover:bg-slate-700'}`}
+                    >
+                        {day.name}
+                    </button>
+                ))}
+            </div>
+            <div className="flex gap-2">
+                <button onClick={handleSave} disabled={!selectedTemplateId} className="flex-grow px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-lg disabled:opacity-50 text-sm transition-shadow shadow-md hover:shadow-lg">Guardar Patrón</button>
+                <button onClick={handleClear} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg text-sm transition-colors">Limpiar</button>
+            </div>
+        </div>
+    );
+};
+
+
 const SchedulePlanner: React.FC<{
-    employeeId: string;
+    employee: Employee;
     schedules: WorkSchedule[];
     onSaveSchedule: (schedule: Omit<WorkSchedule, 'id'>) => void;
     onDeleteSchedule: (employeeId: string, date: string) => void;
-}> = ({ employeeId, schedules, onSaveSchedule, onDeleteSchedule }) => {
+    onUpdateEmployee: (updates: Partial<Employee>) => void;
+}> = ({ employee, schedules, onSaveSchedule, onDeleteSchedule, onUpdateEmployee }) => {
     const { shiftTemplates, addShiftTemplate, updateShiftTemplate, deleteShiftTemplate, currentUser } = useData();
-    const [weekOffset, setWeekOffset] = useState(0);
+    const [monthOffset, setMonthOffset] = useState(0);
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [templateToEdit, setTemplateToEdit] = useState<ShiftTemplate | null>(null);
 
-    const getWeekDays = () => {
-        const startOfWeek = new Date();
-        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1 + (weekOffset * 7)); // Inicia en Lunes
-        return Array.from({ length: 7 }, (_, i) => {
-            const day = new Date(startOfWeek);
-            day.setDate(day.getDate() + i);
-            return day;
-        });
-    };
-    
-    const weekDays = getWeekDays();
+     const { calendarDays, currentMonthName, currentYear } = useMemo(() => {
+        const calendarDays: { date: Date, isCurrentMonth: boolean }[] = [];
+        const date = new Date();
+        date.setDate(1); // Avoid month-end issues
+        date.setMonth(date.getMonth() + monthOffset);
+
+        const month = date.getMonth();
+        const year = date.getFullYear();
+
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        const startDayIndex = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        const prevMonthLastDate = new Date(year, month, 0);
+        const daysInPrevMonth = prevMonthLastDate.getDate();
+        for (let i = startDayIndex; i > 0; i--) {
+            const day = new Date(prevMonthLastDate);
+            day.setDate(daysInPrevMonth - i + 1);
+            calendarDays.push({ date: day, isCurrentMonth: false });
+        }
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            calendarDays.push({ date: new Date(year, month, i), isCurrentMonth: true });
+        }
+
+        const nextMonthFirstDate = new Date(year, month + 1, 1);
+        while (calendarDays.length < 42) {
+             calendarDays.push({ date: new Date(nextMonthFirstDate), isCurrentMonth: false });
+             nextMonthFirstDate.setDate(nextMonthFirstDate.getDate() + 1);
+        }
+        
+        const currentMonthName = new Date(year, month).toLocaleString('es-ES', { month: 'long' });
+        
+        return { calendarDays, currentMonthName: currentMonthName.charAt(0).toUpperCase() + currentMonthName.slice(1), currentYear: year };
+    }, [monthOffset]);
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>, day: Date) => {
         e.preventDefault();
@@ -47,7 +130,7 @@ const SchedulePlanner: React.FC<{
         const template = shiftTemplates.find(t => t.id === templateId);
         if (template) {
             onSaveSchedule({
-                employeeId,
+                employeeId: employee.id,
                 date: day.toISOString().split('T')[0],
                 startTime: template.startTime,
                 endTime: template.endTime,
@@ -79,64 +162,95 @@ const SchedulePlanner: React.FC<{
                     templateToEdit={templateToEdit}
                 />
             )}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <div className="lg:col-span-1 space-y-4">
-                    <h4 className="text-lg font-semibold">Plantillas de Turno</h4>
-                    <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
-                        {shiftTemplates.map(template => (
-                            <div key={template.id} draggable onDragStart={(e) => handleDragStart(e, template)} className={`p-3 rounded-lg cursor-grab border-l-4 border-transparent hover:border-brand-accent-cyan ${template.color}`}>
-                                <p className="font-bold">{template.name}</p>
-                                <p className="text-sm">{template.startTime} - {template.endTime}</p>
-                                <div className="text-right mt-1">
-                                    <button onClick={() => { setTemplateToEdit(template); setIsTemplateModalOpen(true); }} className="text-xs font-semibold text-brand-accent-blue hover:underline">Editar</button>
-                                    <span className="text-brand-border mx-1">|</span>
-                                    <button onClick={() => deleteShiftTemplate(template.id)} className="text-xs font-semibold text-red-500 hover:underline">Borrar</button>
-                                </div>
-                            </div>
-                        ))}
+             <div className="bg-brand-card backdrop-blur-sm border border-brand-border rounded-xl p-6">
+                 <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold text-brand-text-primary">Planificación de Turnos</h2>
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => setMonthOffset(m => m - 1)} className="p-1.5 rounded-full hover:bg-slate-700 transition-colors"><ChevronLeftIcon className="w-5 h-5" /></button>
+                        <span className="text-lg font-semibold w-40 text-center">{currentMonthName} de {currentYear}</span>
+                        <button onClick={() => setMonthOffset(m => m + 1)} className="p-1.5 rounded-full hover:bg-slate-700 transition-colors"><ChevronRightIcon className="w-5 h-5" /></button>
                     </div>
-                    <button onClick={() => { setTemplateToEdit(null); setIsTemplateModalOpen(true); }} className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg">
-                        <PlusIcon className="w-5 h-5"/> Crear Plantilla
-                    </button>
                 </div>
-                <div className="lg:col-span-3">
-                     <div className="flex justify-between items-center mb-4">
-                        <button onClick={() => setWeekOffset(w => w - 1)} className="p-2 bg-slate-700 rounded-full"><ChevronLeftIcon className="w-5 h-5"/></button>
-                        <span className="font-semibold text-lg">
-                            {weekDays[0].toLocaleDateString('es-ES', { month: 'long', day: 'numeric' })} - {weekDays[6].toLocaleDateString('es-ES', { month: 'long', day: 'numeric', year: 'numeric' })}
-                        </span>
-                        <button onClick={() => setWeekOffset(w => w + 1)} className="p-2 bg-slate-700 rounded-full"><ChevronRightIcon className="w-5 h-5"/></button>
+                
+                <div className="p-4 border border-brand-border/50 rounded-lg mb-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 items-start">
+                        <div>
+                            <h4 className="font-semibold text-brand-text-primary mb-2">Plantillas de Turno</h4>
+                            <div className="flex flex-wrap items-start gap-3">
+                                {shiftTemplates.map(template => (
+                                    <div key={template.id} draggable onDragStart={(e) => handleDragStart(e, template)} className={`w-40 p-3 rounded-lg cursor-grab ${template.color}`}>
+                                        <p className="font-bold">{template.name}</p>
+                                        <p className="text-sm">{template.startTime} - {template.endTime}</p>
+                                        <div className="text-right mt-2 text-xs">
+                                            <button onClick={() => { setTemplateToEdit(template); setIsTemplateModalOpen(true); }} className="font-semibold text-blue-300 hover:underline">Editar</button>
+                                            <span className="text-white/30 mx-1">|</span>
+                                            <button onClick={() => deleteShiftTemplate(template.id)} className="font-semibold text-red-400 hover:underline">Borrar</button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold text-brand-text-primary mb-2">Horario Recurrente</h4>
+                            <RecurringScheduleSetter employee={employee} onSave={onUpdateEmployee} />
+                        </div>
                     </div>
-                    <div className="grid grid-cols-7 border-t border-l border-brand-border/50">
-                        {weekDays.map(day => {
-                            const dayStr = day.toISOString().split('T')[0];
-                            const schedule = schedules.find(s => s.date === dayStr);
-                            const template = schedule ? shiftTemplates.find(t => t.startTime === schedule.startTime && t.endTime === schedule.endTime) : null;
+                </div>
+
+
+                <div>
+                     <div className="grid grid-cols-7 border-t border-l border-brand-border/50 bg-brand-card/50 rounded-t-lg">
+                         {['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'].map(day => (
+                             <div key={day} className="text-center font-bold p-2 border-r border-b border-brand-border/50 text-xs text-brand-text-secondary">
+                                {day}
+                             </div>
+                         ))}
+                    </div>
+                    <div className="grid grid-cols-7 border-l border-b border-r border-brand-border/50 bg-brand-card/30 rounded-b-lg">
+                        {calendarDays.map(({ date, isCurrentMonth }) => {
+                            const dayStr = date.toISOString().split('T')[0];
+                            const dayOfWeek = date.getDay() === 0 ? 7 : date.getDay();
+
+                            let scheduleForDay: (WorkSchedule & { isRecurring?: boolean }) | null = null;
+                            let templateForDay: ShiftTemplate | null = null;
+                            
+                            if (isCurrentMonth) {
+                                const specificSchedule = schedules.find(s => s.date === dayStr);
+                                if (specificSchedule) {
+                                    scheduleForDay = { ...specificSchedule, isRecurring: false };
+                                } else if (employee.recurringSchedule) {
+                                    const { templateId, days } = employee.recurringSchedule;
+                                    if (days.includes(dayOfWeek)) {
+                                        const recurringTemplate = shiftTemplates.find(t => t.id === templateId);
+                                        if (recurringTemplate) {
+                                            scheduleForDay = { id: `recurring-${dayStr}`, employeeId: employee.id, date: dayStr, startTime: recurringTemplate.startTime, endTime: recurringTemplate.endTime, organizationId: employee.organizationId, isRecurring: true };
+                                        }
+                                    }
+                                }
+                                if (scheduleForDay) {
+                                    templateForDay = shiftTemplates.find(t => t.startTime === scheduleForDay!.startTime && t.endTime === scheduleForDay!.endTime) || null;
+                                }
+                            }
+
                             return (
                                 <div 
                                     key={dayStr} 
-                                    className="border-r border-b border-brand-border/50 min-h-[120px] p-2 flex flex-col"
-                                    onDragOver={(e) => e.preventDefault()}
-                                    onDrop={(e) => handleDrop(e, day)}
-                                    onDragEnter={(e) => e.currentTarget.classList.add('bg-brand-accent-blue/20')}
-                                    onDragLeave={(e) => e.currentTarget.classList.remove('bg-brand-accent-blue/20')}
+                                    className={`border-r border-b border-brand-border/50 min-h-[120px] p-1.5 flex flex-col transition-colors duration-200 ${!isCurrentMonth ? 'bg-brand-bg/20' : ''}`}
+                                    onDragOver={(e) => isCurrentMonth && e.preventDefault()}
+                                    onDrop={(e) => isCurrentMonth && handleDrop(e, date)}
+                                    onDragEnter={(e) => isCurrentMonth && e.currentTarget.classList.add('bg-brand-accent-blue/20')}
+                                    onDragLeave={(e) => isCurrentMonth && e.currentTarget.classList.remove('bg-brand-accent-blue/20')}
                                 >
-                                    <p className="font-bold">{day.getDate()} <span className="font-normal text-xs">{day.toLocaleDateString('es-ES', { weekday: 'short' })}</span></p>
-                                    {schedule && (
-                                        <div className={`relative mt-2 p-2 rounded-md text-xs flex-grow ${template?.color || 'bg-slate-700'}`}>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onDeleteSchedule(employeeId, dayStr);
-                                                }}
-                                                className="absolute top-1 right-1 p-0.5 rounded-full bg-black/30 hover:bg-black/50 text-white/70 hover:text-white transition-colors z-10"
-                                                title="Eliminar turno"
-                                                aria-label="Eliminar turno"
-                                            >
-                                                <XMarkIcon className="w-3 h-3" />
-                                            </button>
-                                            <p className="font-bold pr-4">{template?.name || 'Turno Personalizado'}</p>
-                                            <p>{schedule.startTime} - {schedule.endTime}</p>
+                                    <span className={`font-semibold text-sm ${!isCurrentMonth ? 'text-brand-text-secondary/30' : ''}`}>{date.getDate()}</span>
+                                    {scheduleForDay && (
+                                        <div className={`relative mt-1 p-2 rounded-md text-xs flex-grow flex flex-col justify-center ${templateForDay?.color || 'bg-slate-700'} ${scheduleForDay.isRecurring ? 'opacity-70' : ''}`}>
+                                            {!scheduleForDay.isRecurring && (
+                                                <button onClick={(e) => { e.stopPropagation(); onDeleteSchedule(employee.id, dayStr); }} className="absolute top-1 right-1 p-0.5 rounded-full bg-black/30 hover:bg-black/50 text-white/70 hover:text-white transition-colors z-10" title="Eliminar turno" aria-label="Eliminar turno">
+                                                    <XMarkIcon className="w-3 h-3" />
+                                                </button>
+                                            )}
+                                            <p className="font-bold pr-4">{templateForDay?.name || 'Turno'}</p>
+                                            {templateForDay?.name !== 'Día Libre' && <p>{scheduleForDay.startTime} - {scheduleForDay.endTime}</p>}
                                         </div>
                                     )}
                                 </div>
@@ -160,7 +274,7 @@ const ShiftTemplateModal: React.FC<{
     const [endTime, setEndTime] = useState(templateToEdit?.endTime || '17:00');
     const [color, setColor] = useState(templateToEdit?.color || 'bg-sky-500/20');
     
-    const colorOptions = ['bg-sky-500/20', 'bg-blue-500/20', 'bg-green-500/20', 'bg-yellow-500/20', 'bg-orange-500/20', 'bg-red-500/20', 'bg-purple-500/20', 'bg-indigo-500/20'];
+    const colorOptions = ['bg-sky-500/20', 'bg-blue-500/20', 'bg-green-500/20', 'bg-yellow-500/20', 'bg-orange-500/20', 'bg-red-500/20', 'bg-purple-500/20', 'bg-indigo-500/20', 'bg-slate-700/50'];
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -217,7 +331,7 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }
       updateEmployee,
   } = useData();
 
-  const [activeTab, setActiveTab] = useState('info');
+  const [activeTab, setActiveTab] = useState('scheduling');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
   // States for forms
@@ -296,6 +410,10 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }
     updateEmployee(updatedEmployee.id, updatedEmployee);
     setIsEditModalOpen(false);
   };
+  
+  const handleUpdateEmployeeForRecurring = (updates: Partial<Employee>) => {
+    updateEmployee(employee.id, updates);
+  };
 
   const calculateHours = (clockIn: string | null, clockOut: string | null): string => {
     if (!clockIn || !clockOut) return '-';
@@ -361,7 +479,7 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }
   const departmentNames = useMemo(() => departments.map(d => d.name), [departments]);
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
       <button onClick={onBack} className="flex items-center gap-2 text-brand-accent-cyan hover:underline font-semibold">
         <ArrowLeftIcon className="w-5 h-5"/>
         Volver al Panel de Asistencia
@@ -399,9 +517,9 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }
           <TabButton tabName="notes" label="Notas Generales" />
       </div>
 
-      <div className="bg-brand-card backdrop-blur-sm border border-brand-border rounded-b-xl p-6">
+      <div className="-mt-px">
          {activeTab === 'info' && (
-            <div>
+            <div className="bg-brand-card backdrop-blur-sm border border-brand-border rounded-b-xl p-6">
                  <h3 className="text-xl font-bold mb-6">Datos del Empleado</h3>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* Col 1 */}
@@ -441,7 +559,7 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }
             </div>
          )}
          {activeTab === 'attendance' && (
-            <div>
+            <div className="bg-brand-card backdrop-blur-sm border border-brand-border rounded-b-xl p-6">
                 <h3 className="text-xl font-bold mb-4">Registro de Asistencia</h3>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-brand-border">
@@ -471,13 +589,12 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }
             </div>
          )}
          {activeTab === 'scheduling' && (
-            <div>
-                 <h3 className="text-xl font-bold mb-4">Planificación de Turnos</h3>
-                 <SchedulePlanner employeeId={employee.id} schedules={employeeSchedules} onSaveSchedule={addOrUpdateWorkSchedule} onDeleteSchedule={deleteWorkSchedule} />
+             <div className="bg-brand-card backdrop-blur-sm border border-brand-border rounded-b-xl p-6">
+                 <SchedulePlanner employee={employee} schedules={employeeSchedules} onSaveSchedule={addOrUpdateWorkSchedule} onDeleteSchedule={deleteWorkSchedule} onUpdateEmployee={handleUpdateEmployeeForRecurring} />
             </div>
          )}
          {activeTab === 'leaves' && (
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <div className="bg-brand-card backdrop-blur-sm border border-brand-border rounded-b-xl p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
                     <h3 className="text-xl font-bold mb-4">Registrar Reposo Médico</h3>
                     <form onSubmit={handleAddSickLeaveSubmit} className="space-y-4 bg-brand-bg/50 p-4 rounded-lg">
@@ -539,7 +656,7 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }
              </div>
          )}
          {activeTab === 'notes' && (
-             <div>
+             <div className="bg-brand-card backdrop-blur-sm border border-brand-border rounded-b-xl p-6">
                  <h3 className="text-xl font-bold mb-4">Notas Generales</h3>
                  <form onSubmit={handleAddNoteSubmit} className="mb-6">
                     <textarea value={newNote} onChange={e => setNewNote(e.target.value)} rows={4} placeholder="Añadir una nueva nota..." className="w-full p-2 bg-brand-bg border border-brand-border rounded"></textarea>
