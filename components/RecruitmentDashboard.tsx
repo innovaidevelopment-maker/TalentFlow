@@ -236,7 +236,7 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
     const departmentNames = useMemo(() => departments.map(d => d.name), [departments]);
 
     return (
-        <div className="p-4 md:p-6 space-y-6 flex flex-col h-full">
+        <div className="p-4 md:p-6 space-y-6 flex flex-col">
             <div className="flex-shrink-0">
                 <h1 className="text-3xl font-bold text-brand-text-primary">Panel de Reclutamiento</h1>
                 <p className="text-brand-text-secondary">Gestiona el flujo de aspirantes desde la postulación hasta la contratación.</p>
@@ -293,8 +293,8 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
                 </div>
             </div>
 
-            <div className="border border-brand-border/50 rounded-xl flex-grow min-h-0 flex flex-col">
-                <div className="grid grid-cols-5 divide-x divide-brand-border/50 flex-grow min-h-0">
+            <div className="border border-brand-border/50 rounded-xl">
+                <div className="grid grid-cols-5 divide-x divide-brand-border/50">
                     {statuses.map(status => {
                         const style = statusStyles[status];
                         const applicantsInStatus = filteredApplicants.filter(a => a.status === status);
@@ -304,7 +304,7 @@ export const RecruitmentDashboard: React.FC<RecruitmentDashboardProps> = ({ curr
                                     <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${style.pill}`}>{style.name}</span>
                                     <span className="text-sm font-semibold text-brand-text-secondary">{applicantsInStatus.length}</span>
                                 </div>
-                                <div className="px-4 pb-4 space-y-3 flex-grow overflow-y-auto">
+                                <div className="px-4 pb-4 space-y-3">
                                 {applicantsInStatus.map(applicant => (
                                     <div key={applicant.id} className="bg-brand-card border border-brand-border rounded-lg p-3 cursor-grab" draggable onDragStart={(e) => handleDragStart(e, applicant.id)} onDragEnd={handleDragEnd}>
                                         <div className="flex justify-between items-start"><p className="font-bold text-brand-text-primary pr-2">{applicant.name}</p><button onClick={() => handleOpenEditModal(applicant)} className="text-brand-text-secondary hover:text-brand-accent-cyan p-1"><PencilIcon className="w-4 h-4" /></button></div>
