@@ -468,22 +468,24 @@ const App: React.FC = () => {
         <div className="h-screen w-screen bg-brand-bg text-brand-text-primary flex flex-col">
             {showHeader && (
                 <header className="bg-brand-card/80 backdrop-blur-sm border-b border-brand-border p-3 flex justify-between items-center text-sm sticky top-0 z-40 flex-shrink-0">
-                    <div className="flex items-center gap-4">
+                    <div className="flex-1">
                         {currentView !== 'main' ? (
                             <button onClick={handleBack} className="flex items-center gap-2 text-brand-accent-cyan hover:underline font-semibold text-lg">
                                 <ArrowLeftIcon className="w-5 h-5"/>
                                 <span>Atrás</span>
                             </button>
+                        ) : <div/>}
+                    </div>
+                    <div className="flex-1 text-center">
+                        {currentView !== 'main' && organizationData.currentOrganization ? (
+                            <span className="font-bold text-lg text-brand-text-primary">
+                                {organizationData.currentOrganization.name}
+                            </span>
                         ) : (
                             <h1 className="font-bold text-lg text-brand-text-primary cursor-pointer" onClick={() => handleNavigate('main')}>TalentFlow</h1>
                         )}
-                        {organizationData.currentOrganization && (
-                             <span className="hidden md:block text-brand-text-secondary font-semibold pl-4 border-l border-brand-border">
-                                {organizationData.currentOrganization.name}
-                            </span>
-                        )}
                     </div>
-                     <div className="flex items-center gap-4">
+                     <div className="flex-1 flex justify-end items-center gap-4">
                         <p className="text-brand-text-secondary hidden md:block">Sesión: <strong className="text-brand-text-primary">{currentUser.name}</strong></p>
                         <button onClick={() => handleNavigate('settings')} className="text-brand-text-secondary hover:text-white">Ajustes</button>
                     </div>
