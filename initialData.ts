@@ -1,4 +1,4 @@
-import type { User, Employee, Applicant, CriteriaTemplate, EvaluationResult, LevelThreshold, ScheduledEvaluation, EvaluationTag, ChatThread, ChatMessage, AttendanceRecord, ScheduledBreak, SickLeave, EmployeeNote, WorkSchedule, ChatReadStatus, Task, Organization, Department, ActivityLogEntry } from './types';
+import type { User, Employee, Applicant, CriteriaTemplate, EvaluationResult, LevelThreshold, ScheduledEvaluation, EvaluationTag, ChatThread, ChatMessage, AttendanceRecord, ScheduledBreak, SickLeave, EmployeeNote, WorkSchedule, ChatReadStatus, Task, Organization, Department, ActivityLogEntry, ShiftTemplate } from './types';
 
 const allTools = [
     'recruitment', 'employees', 'attendance', 'attendanceAnalytics',
@@ -540,6 +540,13 @@ const evaluationTags: EvaluationTag[] = [
     { id: 'tag-4', name: 'Entrevista', color: 'bg-purple-500/50' },
 ];
 
+const shiftTemplates: ShiftTemplate[] = [
+    { id: 'st-1', organizationId: 'org-1', name: 'Turno de Día (8h)', startTime: '09:00', endTime: '17:00', color: 'bg-sky-500/20' },
+    { id: 'st-2', organizationId: 'org-1', name: 'Jornada Completa (9h)', startTime: '09:00', endTime: '18:00', color: 'bg-blue-500/20' },
+    { id: 'st-3', organizationId: 'org-1', name: 'Turno de Tarde (6h)', startTime: '14:00', endTime: '20:00', color: 'bg-amber-500/20' },
+    { id: 'st-4', organizationId: 'org-1', name: 'Turno Nocturno (12h)', startTime: '20:00', endTime: '08:00', color: 'bg-indigo-500/20' },
+]
+
 const activityLog: ActivityLogEntry[] = [];
 
 
@@ -564,4 +571,5 @@ export const initialData = {
   workSchedules,
   tasks,
   activityLog,
+  shiftTemplates,
 };

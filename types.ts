@@ -205,6 +205,16 @@ export interface WorkSchedule {
     organizationId: string;
 }
 
+export interface ShiftTemplate {
+  id: string;
+  organizationId: string;
+  name: string;
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  color: string; // Tailwind color class e.g., 'bg-blue-500'
+}
+
+
 // --- TASK MODULE TYPES ---
 
 export type TaskStatus = 'Pendiente' | 'En Progreso' | 'Completada';

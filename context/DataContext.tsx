@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
 // Fix: Add missing AttendanceStatus type import
-import type { User, Employee, Applicant, CriteriaTemplate, EvaluationResult, Factor, EvaluationScore, EvaluationMode, PotentialLevel, LevelThreshold, ScheduledEvaluation, EvaluationTag, ChatThread, ChatMessage, ChatReadStatus, AttendanceRecord, ScheduledBreak, SickLeave, EmployeeNote, WorkSchedule, Task, Organization, Department, ApplicantStatus, ActivityLogEntry, AttendanceStatus } from '../types';
+import type { User, Employee, Applicant, CriteriaTemplate, EvaluationResult, Factor, EvaluationScore, EvaluationMode, PotentialLevel, LevelThreshold, ScheduledEvaluation, EvaluationTag, ChatThread, ChatMessage, ChatReadStatus, AttendanceRecord, ScheduledBreak, SickLeave, EmployeeNote, WorkSchedule, Task, Organization, Department, ApplicantStatus, ActivityLogEntry, AttendanceStatus, ShiftTemplate } from '../types';
 import { initialData } from '../initialData';
 import { generateFeedback } from '../services/geminiService';
 import { calculateScoresAndLevel, getLevel } from '../utils';
@@ -56,6 +56,7 @@ interface DataContextType {
     activityLog: ActivityLogEntry[];
     levelThresholds: LevelThreshold[];
     evaluationTags: EvaluationTag[];
+    shiftTemplates: ShiftTemplate[];
     criteriaInEdit: Factor[];
     currentUser: User | null;
 
@@ -79,6 +80,7 @@ interface DataContextType {
     setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
     setActivityLog: React.Dispatch<React.SetStateAction<ActivityLogEntry[]>>;
     setLevelThresholds: React.Dispatch<React.SetStateAction<LevelThreshold[]>>;
+    setShiftTemplates: React.Dispatch<React.SetStateAction<ShiftTemplate[]>>;
     setCriteriaInEdit: React.Dispatch<React.SetStateAction<Factor[]>>;
     setCurrentUser: React.Dispatch<React.SetStateAction<User | null>>;
 
@@ -114,6 +116,10 @@ interface DataContextType {
     addScheduledBreak: (sBreak: Omit<ScheduledBreak, 'id'>) => Promise<ScheduledBreak | null>;
     addEmployeeNote: (note: Omit<EmployeeNote, 'id'>) => Promise<EmployeeNote | null>;
     addOrUpdateWorkSchedule: (schedule: Omit<WorkSchedule, 'id'>, orgId: string) => Promise<void>;
+    deleteWorkSchedule: (employeeId: string, date: string) => Promise<void>;
+    addShiftTemplate: (template: Omit<ShiftTemplate, 'id'>) => Promise<ShiftTemplate | null>;
+    updateShiftTemplate: (templateId: string, updates: Partial<ShiftTemplate>) => Promise<void>;
+    deleteShiftTemplate: (templateId: string) => Promise<void>;
     updateUser: (userId: string, updates: Partial<User>) => Promise<void>;
     addUser: (user: Omit<User, 'id'>) => Promise<User | null>;
     deleteUser: (userId: string) => Promise<void>;
@@ -146,6 +152,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [tasks, setTasks] = useLocalStorage<Task[]>('tasks', initialData.tasks);
     const [activityLog, setActivityLog] = useLocalStorage<ActivityLogEntry[]>('activityLog', initialData.activityLog);
     const [levelThresholds, setLevelThresholds] = useLocalStorage<LevelThreshold[]>('levelThresholds', initialData.levelThresholds);
+    const [shiftTemplates, setShiftTemplates] = useLocalStorage<ShiftTemplate[]>('shiftTemplates', initialData.shiftTemplates);
     const [evaluationTags] = useState<EvaluationTag[]>(initialData.evaluationTags);
     const [criteriaInEdit, setCriteriaInEdit] = useLocalStorage<Factor[]>('criteriaInEdit', []);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -430,7 +437,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return [...prev, { ...schedule, id: `ws-${Date.now()}`, organizationId: orgId }];
         });
     };
+
+    const deleteWorkSchedule = async (employeeId: string, date: string) => {
+        setWorkSchedules(prev => prev.filter(s => !(s.employeeId === employeeId && s.date === date)));
+    };
     
+    const addShiftTemplate = async (template: Omit<ShiftTemplate, 'id'>) => {
+        const newTemplate = { ...template, id: `st-${Date.now()}` };
+        setShiftTemplates(prev => [...prev, newTemplate]);
+        return newTemplate;
+    };
+
+    const updateShiftTemplate = async (templateId: string, updates: Partial<ShiftTemplate>) => {
+        setShiftTemplates(prev => prev.map(t => t.id === templateId ? { ...t, ...updates } : t));
+    };
+
+    const deleteShiftTemplate = async (templateId: string) => {
+        setShiftTemplates(prev => prev.filter(t => t.id !== templateId));
+    };
+
     const updateUser = async (userId: string, updates: Partial<User>) => {
         setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
     };
@@ -472,12 +497,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const value = {
         organizations, users, employees, applicants, criteriaTemplates, evaluations, departments, scheduledEvaluations,
         chatThreads, chatMessages, chatReadStatuses, attendanceRecords, scheduledBreaks, sickLeaves, employeeNotes,
-        workSchedules, tasks, activityLog, levelThresholds, evaluationTags, criteriaInEdit, currentUser,
+        workSchedules, tasks, activityLog, levelThresholds, evaluationTags, shiftTemplates, criteriaInEdit, currentUser,
         
         setOrganizations, setUsers, setEmployees, setApplicants, setCriteriaTemplates, setEvaluations, setDepartments,
         setScheduledEvaluations, setChatThreads, setChatMessages, setChatReadStatuses, setAttendanceRecords,
         setScheduledBreaks, setSickLeaves, setEmployeeNotes, setWorkSchedules, setTasks, setActivityLog,
-        setLevelThresholds, setCriteriaInEdit, setCurrentUser,
+        setLevelThresholds, setShiftTemplates, setCriteriaInEdit, setCurrentUser,
         
         logActivity, handleCompleteEvaluation, handleSaveApplicant, handleUpdateApplicantStatus, handleHireApplicant,
         handleSaveEmployee, handleDeleteEmployee, handleImportEmployees, handleAddDepartment, handleDeleteDepartment,
@@ -486,6 +511,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addChatThread, addChatMessage, updateChatMessage, deleteChatMessage, updateChatThread, deleteChatThread, markThreadAsRead,
         addOrUpdateAttendanceRecord, updateAttendanceStatus, updateAttendanceRecord,
         addSickLeave, addScheduledBreak, addEmployeeNote, addOrUpdateWorkSchedule,
+        deleteWorkSchedule, addShiftTemplate, updateShiftTemplate, deleteShiftTemplate,
         updateUser, addUser, deleteUser,
         addTask, updateTask, deleteTask, updateEmployee
     };
@@ -522,6 +548,7 @@ export const useData = () => {
             employeeNotes: context.employeeNotes.filter(en => en.organizationId === orgId),
             workSchedules: context.workSchedules.filter(ws => ws.organizationId === orgId),
             activityLog: context.activityLog.filter(log => log.organizationId === orgId),
+            shiftTemplates: context.shiftTemplates.filter(st => st.organizationId === orgId),
         };
     }, [currentUser, context]);
 

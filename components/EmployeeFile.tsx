@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import type { Employee, AttendanceRecord, ScheduledBreak, SickLeave, EmployeeNote, User, WorkSchedule } from '../types';
+import type { Employee, AttendanceRecord, ScheduledBreak, SickLeave, EmployeeNote, User, WorkSchedule, ShiftTemplate } from '../types';
 import { useData } from '../context/DataContext';
-import { ArrowLeftIcon, PlusIcon, PencilIcon } from './icons';
+import { ArrowLeftIcon, PlusIcon, PencilIcon, TrashIcon, ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from './icons';
 import { EmployeeFormModal } from './EmployeeFormModal';
 
 interface EmployeeFileProps {
@@ -18,18 +18,20 @@ const fileToBase64 = (file: File): Promise<string> => {
     });
 };
 
-const WeeklyScheduler: React.FC<{
-    employeeId: string,
-    schedules: WorkSchedule[],
-    onSave: (schedule: Omit<WorkSchedule, 'id'>) => void,
-    organizationId: string,
-}> = ({ employeeId, schedules, onSave, organizationId }) => {
+const SchedulePlanner: React.FC<{
+    employeeId: string;
+    schedules: WorkSchedule[];
+    onSaveSchedule: (schedule: Omit<WorkSchedule, 'id'>) => void;
+    onDeleteSchedule: (employeeId: string, date: string) => void;
+}> = ({ employeeId, schedules, onSaveSchedule, onDeleteSchedule }) => {
+    const { shiftTemplates, addShiftTemplate, updateShiftTemplate, deleteShiftTemplate, currentUser } = useData();
     const [weekOffset, setWeekOffset] = useState(0);
-    const [editingDay, setEditingDay] = useState<{ day: Date, schedule?: WorkSchedule } | null>(null);
+    const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+    const [templateToEdit, setTemplateToEdit] = useState<ShiftTemplate | null>(null);
 
     const getWeekDays = () => {
         const startOfWeek = new Date();
-        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1 + (weekOffset * 7)); // Start on Monday
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1 + (weekOffset * 7)); // Inicia en Lunes
         return Array.from({ length: 7 }, (_, i) => {
             const day = new Date(startOfWeek);
             day.setDate(day.getDate() + i);
@@ -39,73 +41,157 @@ const WeeklyScheduler: React.FC<{
     
     const weekDays = getWeekDays();
 
-    const handleSaveSchedule = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>, day: Date) => {
         e.preventDefault();
-        if (!editingDay) return;
-        const formData = new FormData(e.currentTarget);
-        const startTime = formData.get('startTime') as string;
-        const endTime = formData.get('endTime') as string;
-
-        onSave({
-            employeeId,
-            date: editingDay.day.toISOString().split('T')[0],
-            startTime,
-            endTime,
-            organizationId
-        });
-        setEditingDay(null);
+        const templateId = e.dataTransfer.getData('templateId');
+        const template = shiftTemplates.find(t => t.id === templateId);
+        if (template) {
+            onSaveSchedule({
+                employeeId,
+                date: day.toISOString().split('T')[0],
+                startTime: template.startTime,
+                endTime: template.endTime,
+                organizationId: currentUser!.organizationId
+            });
+        }
+        e.currentTarget.classList.remove('bg-brand-accent-blue/20');
     };
 
+    const handleDragStart = (e: React.DragEvent<HTMLDivElement>, template: ShiftTemplate) => {
+        e.dataTransfer.setData('templateId', template.id);
+    };
+
+    const handleSaveTemplate = (templateData: Omit<ShiftTemplate, 'id' | 'organizationId'>) => {
+        if (templateToEdit) {
+            updateShiftTemplate(templateToEdit.id, templateData);
+        } else {
+            addShiftTemplate({ ...templateData, organizationId: currentUser!.organizationId });
+        }
+    };
+    
     return (
         <div>
-            <div className="flex justify-between items-center mb-4">
-                <button onClick={() => setWeekOffset(w => w - 1)} className="px-3 py-1 bg-slate-700 rounded">&lt; Semana Anterior</button>
-                <span className="font-semibold">
-                    {weekDays[0].toLocaleDateString()} - {weekDays[6].toLocaleDateString()}
-                </span>
-                <button onClick={() => setWeekOffset(w => w + 1)} className="px-3 py-1 bg-slate-700 rounded">Semana Siguiente &gt;</button>
-            </div>
-            <div className="grid grid-cols-7 gap-2">
-                {weekDays.map(day => {
-                    const dayStr = day.toISOString().split('T')[0];
-                    const schedule = schedules.find(s => s.date === dayStr);
-                    return (
-                        <div key={dayStr} onClick={() => setEditingDay({ day, schedule })} className="border border-brand-border/50 rounded-lg p-3 text-center cursor-pointer hover:bg-brand-bg/50">
-                            <p className="font-bold">{day.toLocaleDateString('es-ES', { weekday: 'short' })}</p>
-                            <p className="text-2xl">{day.getDate()}</p>
-                            {schedule ? (
-                                <p className="text-sm mt-2 text-brand-accent-cyan">{schedule.startTime} - {schedule.endTime}</p>
-                            ) : (
-                                <p className="text-sm mt-2 text-brand-text-secondary">Sin horario</p>
-                            )}
-                        </div>
-                    )
-                })}
-            </div>
-
-            {editingDay && (
-                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="bg-brand-card border border-brand-border rounded-xl p-6 w-full max-w-sm m-4">
-                        <h3 className="text-xl font-bold mb-4">
-                            Establecer Horario para {editingDay.day.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
-                        </h3>
-                        <form onSubmit={handleSaveSchedule} className="space-y-4">
-                             <div>
-                                <label className="text-sm">Hora de Inicio</label>
-                                <input type="time" name="startTime" defaultValue={editingDay.schedule?.startTime || "09:00"} className="w-full mt-1 p-2 bg-brand-bg border border-brand-border rounded" required />
+            {isTemplateModalOpen && (
+                <ShiftTemplateModal 
+                    isOpen={isTemplateModalOpen}
+                    onClose={() => { setIsTemplateModalOpen(false); setTemplateToEdit(null); }}
+                    onSave={handleSaveTemplate}
+                    templateToEdit={templateToEdit}
+                />
+            )}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div className="lg:col-span-1 space-y-4">
+                    <h4 className="text-lg font-semibold">Plantillas de Turno</h4>
+                    <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+                        {shiftTemplates.map(template => (
+                            <div key={template.id} draggable onDragStart={(e) => handleDragStart(e, template)} className={`p-3 rounded-lg cursor-grab border-l-4 border-transparent hover:border-brand-accent-cyan ${template.color}`}>
+                                <p className="font-bold">{template.name}</p>
+                                <p className="text-sm">{template.startTime} - {template.endTime}</p>
+                                <div className="text-right mt-1">
+                                    <button onClick={() => { setTemplateToEdit(template); setIsTemplateModalOpen(true); }} className="text-xs font-semibold text-brand-accent-blue hover:underline">Editar</button>
+                                    <span className="text-brand-border mx-1">|</span>
+                                    <button onClick={() => deleteShiftTemplate(template.id)} className="text-xs font-semibold text-red-500 hover:underline">Borrar</button>
+                                </div>
                             </div>
-                            <div>
-                                <label className="text-sm">Hora de Fin</label>
-                                <input type="time" name="endTime" defaultValue={editingDay.schedule?.endTime || "17:00"} className="w-full mt-1 p-2 bg-brand-bg border border-brand-border rounded" required />
-                            </div>
-                            <div className="flex justify-end gap-4 pt-4">
-                                <button type="button" onClick={() => setEditingDay(null)} className="px-4 py-2 bg-slate-700 text-white font-semibold rounded-lg hover:bg-slate-600">Cancelar</button>
-                                <button type="submit" className="px-4 py-2 bg-gradient-to-r from-brand-accent-green to-brand-accent-cyan text-white font-semibold rounded-lg">Guardar Horario</button>
-                            </div>
-                        </form>
+                        ))}
+                    </div>
+                    <button onClick={() => { setTemplateToEdit(null); setIsTemplateModalOpen(true); }} className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-brand-accent-purple to-brand-accent-indigo text-white font-semibold rounded-lg">
+                        <PlusIcon className="w-5 h-5"/> Crear Plantilla
+                    </button>
+                </div>
+                <div className="lg:col-span-3">
+                     <div className="flex justify-between items-center mb-4">
+                        <button onClick={() => setWeekOffset(w => w - 1)} className="p-2 bg-slate-700 rounded-full"><ChevronLeftIcon className="w-5 h-5"/></button>
+                        <span className="font-semibold text-lg">
+                            {weekDays[0].toLocaleDateString('es-ES', { month: 'long', day: 'numeric' })} - {weekDays[6].toLocaleDateString('es-ES', { month: 'long', day: 'numeric', year: 'numeric' })}
+                        </span>
+                        <button onClick={() => setWeekOffset(w => w + 1)} className="p-2 bg-slate-700 rounded-full"><ChevronRightIcon className="w-5 h-5"/></button>
+                    </div>
+                    <div className="grid grid-cols-7 border-t border-l border-brand-border/50">
+                        {weekDays.map(day => {
+                            const dayStr = day.toISOString().split('T')[0];
+                            const schedule = schedules.find(s => s.date === dayStr);
+                            const template = schedule ? shiftTemplates.find(t => t.startTime === schedule.startTime && t.endTime === schedule.endTime) : null;
+                            return (
+                                <div 
+                                    key={dayStr} 
+                                    className="border-r border-b border-brand-border/50 min-h-[120px] p-2 flex flex-col"
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={(e) => handleDrop(e, day)}
+                                    onDragEnter={(e) => e.currentTarget.classList.add('bg-brand-accent-blue/20')}
+                                    onDragLeave={(e) => e.currentTarget.classList.remove('bg-brand-accent-blue/20')}
+                                >
+                                    <p className="font-bold">{day.getDate()} <span className="font-normal text-xs">{day.toLocaleDateString('es-ES', { weekday: 'short' })}</span></p>
+                                    {schedule && (
+                                        <div className={`relative mt-2 p-2 rounded-md text-xs flex-grow ${template?.color || 'bg-slate-700'}`}>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onDeleteSchedule(employeeId, dayStr);
+                                                }}
+                                                className="absolute top-1 right-1 p-0.5 rounded-full bg-black/30 hover:bg-black/50 text-white/70 hover:text-white transition-colors z-10"
+                                                title="Eliminar turno"
+                                                aria-label="Eliminar turno"
+                                            >
+                                                <XMarkIcon className="w-3 h-3" />
+                                            </button>
+                                            <p className="font-bold pr-4">{template?.name || 'Turno Personalizado'}</p>
+                                            <p>{schedule.startTime} - {schedule.endTime}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        })}
                     </div>
                 </div>
-            )}
+            </div>
+        </div>
+    );
+};
+
+const ShiftTemplateModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onSave: (template: Omit<ShiftTemplate, 'id' | 'organizationId'>) => void;
+    templateToEdit: ShiftTemplate | null;
+}> = ({ isOpen, onClose, onSave, templateToEdit }) => {
+    const [name, setName] = useState(templateToEdit?.name || '');
+    const [startTime, setStartTime] = useState(templateToEdit?.startTime || '09:00');
+    const [endTime, setEndTime] = useState(templateToEdit?.endTime || '17:00');
+    const [color, setColor] = useState(templateToEdit?.color || 'bg-sky-500/20');
+    
+    const colorOptions = ['bg-sky-500/20', 'bg-blue-500/20', 'bg-green-500/20', 'bg-yellow-500/20', 'bg-orange-500/20', 'bg-red-500/20', 'bg-purple-500/20', 'bg-indigo-500/20'];
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSave({ name, startTime, endTime, color });
+        onClose();
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60]">
+            <div className="bg-brand-card border border-brand-border rounded-xl p-6 w-full max-w-md m-4">
+                <h3 className="text-xl font-bold mb-4">{templateToEdit ? 'Editar Plantilla' : 'Nueva Plantilla de Turno'}</h3>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Nombre de la plantilla" className="w-full p-2 bg-brand-bg border border-brand-border rounded" required />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div><label className="text-sm">Hora de Inicio</label><input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="w-full mt-1 p-2 bg-brand-bg border border-brand-border rounded" required /></div>
+                        <div><label className="text-sm">Hora de Fin</label><input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="w-full mt-1 p-2 bg-brand-bg border border-brand-border rounded" required /></div>
+                    </div>
+                    <div>
+                        <label className="text-sm">Color</label>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            {colorOptions.map(c => <button key={c} type="button" onClick={() => setColor(c)} className={`w-8 h-8 rounded-full ${c} ${color === c ? 'ring-2 ring-brand-accent-cyan' : ''}`}></button>)}
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-4 pt-4">
+                        <button type="button" onClick={onClose} className="px-4 py-2 bg-slate-700 rounded-lg">Cancelar</button>
+                        <button type="submit" className="px-4 py-2 bg-brand-accent-blue text-white rounded-lg">Guardar</button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 };
@@ -121,13 +207,13 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }
       workSchedules,
       users,
       departments,
-      // Fix: Add missing properties from context
       currentUser,
       updateAttendanceRecord,
       addSickLeave,
       addScheduledBreak,
       addEmployeeNote,
       addOrUpdateWorkSchedule,
+      deleteWorkSchedule,
       updateEmployee,
   } = useData();
 
@@ -222,6 +308,22 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }
     const diff = (outDate.getTime() - inDate.getTime()) / 1000 / 60 / 60;
     return `${diff.toFixed(2)} hrs`;
   };
+
+  const calculateOvertime = (record: AttendanceRecord, schedules: WorkSchedule[]): string => {
+    if (!record.clockOut) return '0.00';
+    const schedule = schedules.find(s => s.date === record.date);
+    if (!schedule) return '0.00';
+
+    const endTime = new Date(`1970-01-01T${schedule.endTime}`);
+    const clockOutTime = new Date(`1970-01-01T${record.clockOut}`);
+
+    if (clockOutTime > endTime) {
+        const diffMs = clockOutTime.getTime() - endTime.getTime();
+        const diffHours = diffMs / (1000 * 60 * 60);
+        return diffHours.toFixed(2);
+    }
+    return '0.00';
+  };
   
   const getAuthorName = (authorId: string) => users.find(u => u.id === authorId)?.name || 'Desconocido';
 
@@ -291,7 +393,7 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }
 
       <div className="border-b border-brand-border flex">
           <TabButton tabName="info" label="Información Personal" />
-          <TabButton tabName="attendance" label="Asistencia y Horarios" />
+          <TabButton tabName="attendance" label="Asistencia" />
           <TabButton tabName="scheduling" label="Planificación de Horarios" />
           <TabButton tabName="leaves" label="Descansos y Reposos" />
           <TabButton tabName="notes" label="Notas Generales" />
@@ -349,6 +451,7 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }
                                 <th className="px-4 py-2 text-left text-xs font-medium text-brand-text-secondary uppercase">Entrada</th>
                                 <th className="px-4 py-2 text-left text-xs font-medium text-brand-text-secondary uppercase">Salida</th>
                                 <th className="px-4 py-2 text-left text-xs font-medium text-brand-text-secondary uppercase">Horas Trabajadas</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-brand-text-secondary uppercase">Horas Extra</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-brand-border">
@@ -358,6 +461,7 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }
                                     <td className="px-4 py-2"><input type="time" value={record.clockIn || ''} onChange={(e) => handleTimeChange(record, 'clockIn', e.target.value)} className="bg-brand-bg border border-brand-border rounded p-1" /></td>
                                     <td className="px-4 py-2"><input type="time" value={record.clockOut || ''} onChange={(e) => handleTimeChange(record, 'clockOut', e.target.value)} className="bg-brand-bg border border-brand-border rounded p-1" /></td>
                                     <td className="px-4 py-2">{calculateHours(record.clockIn, record.clockOut)}</td>
+                                    <td className="px-4 py-2 font-semibold text-brand-accent-yellow">{calculateOvertime(record, employeeSchedules)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -368,8 +472,8 @@ export const EmployeeFile: React.FC<EmployeeFileProps> = ({ employeeId, onBack }
          )}
          {activeTab === 'scheduling' && (
             <div>
-                 <h3 className="text-xl font-bold mb-4">Planificación de Turnos Semanales</h3>
-                 <WeeklyScheduler employeeId={employee.id} schedules={employeeSchedules} onSave={addOrUpdateWorkSchedule} organizationId={employee.organizationId} />
+                 <h3 className="text-xl font-bold mb-4">Planificación de Turnos</h3>
+                 <SchedulePlanner employeeId={employee.id} schedules={employeeSchedules} onSaveSchedule={addOrUpdateWorkSchedule} onDeleteSchedule={deleteWorkSchedule} />
             </div>
          )}
          {activeTab === 'leaves' && (
